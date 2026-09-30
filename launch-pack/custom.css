@@ -1,0 +1,3013 @@
+/* =====================================================================================
+   The Hangout Climbing — SimplyBook custom CSS
+   Paste this whole file into:  Custom Features  ->  Custom CSS  ->  "Booking pages CSS"
+   replacing everything that is in the box today (it is dead v1 code — see notes below).
+
+   Prepared 22 Sep 2026. Revised 23 Sep 2026 (memberships, footer, card polish) and 24 Sep 2026
+   (section 12: account, payment and waiver screens). Redesigned 25 Sep 2026: black and pink,
+   a black sticky header, the home page as bands under a full-screen banner, cut
+   corners and slanted edges instead of rounded ones, black page headers on the pages that
+   sell, reviews as cards.
+
+   MOTION
+   The movement is not in this file: it is launch-pack/motion.js, run from Google Tag Manager.
+   This file is the whole design without it. One custom property here is a hook it moves:
+   --hangout-sign (the logo in the footer); unset, it leaves everything where it
+   belongs. The banner does not move.
+
+   WHAT THIS FILE DOES NOT DO
+   The colours are NOT set here. SimplyBook compiles its palette into ~250 rules in the page
+   head, so changing the three colour settings in the admin is both simpler and far more
+   thorough than overriding them. Do that first (settings-checklist.md step 3):
+        Accent / active elements   #e600ff  ->  #C22E68
+        Buttons                    #dd3649  ->  #C22E68
+        Button text                #f5fcff  ->  #FFFFFF
+   Everything in this file is type, spacing, the logo, focus states and a handful of
+   hard-coded colours SimplyBook does not expose as settings.
+
+   CONTRAST
+   #C22E68 gives 5.41:1 as text on white, 4.83:1 on the #f2f2f2 page background, and 5.41:1
+   for white text on it (6.58:1 on the darker hover shade). The current palette fails AA in
+   four places. Re-check with tools/contrast.js.
+
+   HOW IT IS ORGANISED
+     1  Type
+     2  Header and navigation (and the phone menu)
+     3  Hero
+     4  Home: the introduction, opening hours and the black bands
+     5  Cards  (services, memberships, gift cards)
+     6  Buttons
+     7  Booking: step bar, add-ons, calendar, time slots
+     8  Page headers, reviews, news, gift cards, gallery, forms
+     9  Footer and floating chrome
+    10  Accessibility: focus, contrast fixes, tap targets
+    11  Mobile
+    12  Account, payment and the waiver field
+
+   Every selector below appears in the captured live DOM — see capture/SELECTORS.md. Section
+   12 is the exception: those screens need an account or a payment, so their selectors are
+   checked against the live site's own page templates instead (see the note there).
+   ===================================================================================== */
+
+@import url('https://fonts.googleapis.com/css2?family=Oswald:wght@500;600;700&display=swap');
+
+
+/* ============================================================ 1  Type ============== */
+/* Oswald for anything that behaves like a label: headings, nav, buttons, prices, dates.
+   Body copy and form fields stay in Noto Sans, which the theme already loads. */
+
+:root {
+  --hangout-pink: #C22E68;        /* interactive: same value as the two colour settings */
+  --hangout-ink: #141214;         /* the logo's black: headings, and every dark band */
+  --hangout-muted: #5B6270;       /* secondary text; replaces #81889a, which failed AA */
+  --hangout-display: Oswald, 'Noto Sans', 'Helvetica Neue', Arial, sans-serif;
+
+  /* The redesign (25 Sep 2026). Black and pink, as the logo and the painted walls are.
+     Light pages keep the theme's #f2f2f2; the home page alternates it with black bands. */
+  --hangout-ink-raised: #1E1A1E;  /* a card or panel sitting on a black band */
+  --hangout-pink-lit: #EC6A9C;    /* pink TEXT on black: 6.31:1 (#C22E68 manages only 3.45) */
+  --hangout-pink-logo: #D83A7A;   /* the logo's pink: shapes only, never small text */
+  --hangout-fog: #A9A2A8;         /* secondary text on black: 7.48:1 */
+  --hangout-rule-dark: rgba(255, 255, 255, .12);
+}
+
+#header .nav a,
+#header #sb_appended_menu_item > a,
+#main-buttons .company-name,
+#main-buttons .btn a,
+.title-section,
+.title-main,
+.container-caption,
+.cap.short,
+.cap.full,
+.split-title .title-section,
+.step_info_item .title-small,
+.paid-attr__item .item-name,
+#news-single .cap,
+.review-item .cap,
+.btn,
+.btn a,
+button.sb-next,
+.send-message-button,
+.membership-item .active-container a.btn,
+.service-item .btn.select a,
+.promotion-item .btn.select,
+#sb_sign_in_btn,
+#sb_sign_up_btn {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.title-section,
+.title-main,
+.container-caption,
+.cap.short,
+.cap.full,
+#news-single .cap,
+.review-item .cap {
+  color: var(--hangout-ink);
+}
+
+.title-section {
+  font-size: 28px;
+  line-height: 1.15;
+  letter-spacing: 0.005em;
+}
+
+.title-main,
+.container-caption {
+  font-size: 24px;
+  line-height: 1.2;
+}
+
+.cap.short,
+.cap.full {
+  font-size: 21px;
+  line-height: 1.2;
+}
+
+/* The theme sets the booking step titles in Helvetica Neue, out of step with everything else.
+   Its rule carries two ids, so this one repeats the chain. Set like the header navigation. */
+#sb-timeline #steps-nav li .content .title-small,
+#sb-timeline #steps-nav li:first-child .content .title-small,
+#sb-timeline #steps-nav li.step_info_item.passed .content .title-small,
+#sb-timeline #steps-nav li.step_info_item.filled .content .title-small,
+#sb-timeline #steps-nav li.step_info_item.passed + li.step_info_item:not(.passed) .content .title-small {
+  font-family: var(--hangout-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Prices and durations read as data, so give them tabular figures. */
+.badge.price,
+.paid-attr__item .item-price,
+.membership-item .date-bar .date,
+.slot .sb-cell,
+.calendar .date {
+  font-family: var(--hangout-display);
+  font-variant-numeric: tabular-nums;
+  font-weight: 600;
+}
+
+.badge.price {
+  font-size: 22px;
+}
+
+/* ---- One type system, everywhere (Ross, 24 Sep 2026: "inconsistency with fonts") -------
+   Two faces. Oswald, as in the header navigation and the banner, for everything that names,
+   labels or acts: headings, card titles, buttons, tabs, prices, small labels. Noto Sans for
+   everything you read: descriptions, form labels, table data. Checked on every screen by
+   tools/audit-type.js. Many rules below repeat the theme's own long selector, because the
+   theme sets these in Noto Sans, Helvetica or plain sans-serif at a higher specificity; a
+   rule that loses the cascade does nothing, which is how the drift crept in. */
+
+/* Card titles: one size (the theme's 18px beat the 21px above on every card). */
+.tab.tab-col .cap.short {
+  font-size: 20px;
+}
+
+/* Headings the theme sets in Noto Sans. */
+#client-login .custom-form .cap,
+.social-container .cap,
+.current-booking-info .cap,
+.invoice-pay-page-grid_item .title.title--h3,
+.invoice-pay-page-grid_item .title.title--h4,
+.invoice-pay-page-grid_item .title.invoice-title,
+.invoice-pay-page-grid_item.right-block .right-block--header .title {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--hangout-ink);
+}
+
+#client-login .custom-form .cap,
+#reviews-view .add-review .form .social-container .cap {
+  font-size: 20px;
+}
+
+/* Add-on names are card titles. */
+#sb-timeline #steps #steps-content #sb_booking_content .paid-attribute-wrapper .paid-attribute-step #sb_attribute_list_container .product-item .flex-row .item-name {
+  font-size: 18px;
+  font-weight: 600;
+}
+
+.current-booking-info .cap,
+.invoice-pay-page-grid_item .title.title--h3,
+.invoice-pay-page-grid_item .title.title--h4,
+.invoice-pay-page-grid_item .title.invoice-title,
+.invoice-pay-page-grid_item.right-block .right-block--header .title {
+  font-size: 22px;
+}
+
+#news-single .article .cap {
+  font-size: 24px;
+}
+
+/* "Invoice summary" shares its row with the date; at 22px it would break over two lines. */
+.invoice-pay-page-grid_item.right-block .right-block--header .title {
+  white-space: nowrap;
+}
+
+/* The calendar's month and its Prev / Next links. */
+.top-date-select .header .txt-center {
+  font-family: var(--hangout-display);
+  font-size: 18px;
+  font-weight: 600;
+  color: var(--hangout-ink);
+}
+
+.top-date-select .header #sb_prev_month .txt,
+.top-date-select .header #sb_next_month .txt {
+  font-family: var(--hangout-display);
+  font-size: 14px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Prices: one weight, and one size wherever a price is the point of the card. */
+.promotion-list .promotion-item .promo-label .price-val,
+.promotion-list .promotion-item__tag .promo-label .price-val {
+  font-weight: 600;
+}
+
+.promotion-list .promotion-item .bar-service__item-promo-label .price-val,
+.full-info-price--value {
+  font-size: 20px;
+}
+
+.promotion-item .btn.select .promotion-item__price {
+  font-size: 15px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+
+/* Totals are prices, and every other price is in Oswald. */
+.full-info-price--value,
+.invoice-amounts--total .invoice-amount--value b {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  font-variant-numeric: tabular-nums;
+  color: var(--hangout-ink);
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content .paid-attribute-wrapper .paid-attribute-step #sb_attribute_list_container .product-item .flex-row .item-price {
+  font-size: 17px;
+}
+
+/* Small labels: table headings and tags, in the style of the opening-hours day names. */
+.invoice-table thead th,
+.invoice-pay-page-grid_item.right-block .right-block--body table thead th,
+.promotion-list .promotion-item__tag .promo-label small {
+  font-family: var(--hangout-display);
+  font-size: 13px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+#content-view #schedule .overview tr td.day {
+  font-weight: 600;
+}
+
+/* "Google" / "Facebook" beside the sign-in icons: a label, so the label style. */
+.btn-bar__social-links .btn--action .btn--txt {
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* The Back link above each booking step: the theme sets its words at 16px. */
+#sb-timeline #steps #sb_back_button span {
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+/* Buttons the theme leaves in mixed case, at 16px, or in a lighter weight. */
+#sb_book_btn,
+#sb_pay_btn,
+.invoice-buttons-container .btn-invoice,
+.is-logged .bar-with-btn .btn,
+.client-login.btn .btn--txt,
+.recurring-profile-info .active-container a.btn {
+  font-family: var(--hangout-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* One type system, one set of values (Ross, 27 Sep 2026: "check the fonts are consistent").
+   Every capitalised Oswald label is tracked 0.08em, as the buttons are (the menu, Back and Read
+   more had 0.07em, the booking date badge 0.06em). In Noto Sans, the theme's 13px "Remind
+   password" is brought up to the 14px of the other small print, and the bold labels in a
+   booking's summary ("Places:", the waiver answer) use the 600 weight every other bold label
+   uses, not 700. */
+#sb_sign_in_form .remind-pass {
+  font-size: 14px;
+}
+
+.current-booking-info b {
+  font-weight: 600;
+}
+
+/* Below 480px the gallery list is given margin: 0 -2px inside a column that has already used
+   up its gutter, so 2px of the page hangs off the right edge and the whole page scrolls
+   sideways. (This is on the live site today.) */
+#gallery-view .img-list,
+#social-gallery-view .img-list {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+
+/* ================================================ 2  Header and navigation ========= */
+
+/* Black, like the logo's H, and it stays with you: the bar is sticky, so Book (first in the
+   menu) is one tap away from anywhere on any page. The theme draws it white and static, with 20px of
+   padding round a 12x90 logo. */
+#header {
+  position: sticky;
+  top: 0;
+  z-index: 1030;
+  padding-top: 8px;
+  padding-bottom: 8px;
+  background-color: var(--hangout-ink);
+  box-shadow: 0 1px 0 var(--hangout-rule-dark);
+}
+
+#header .brand {
+  padding-top: 0;
+  padding-bottom: 0;
+}
+
+/* The logo today is a 45x325 PNG squashed into a 12x90 box. The replacement is square. */
+#header .brand.company-logo-and-name .logo a img {
+  width: auto;
+  height: 52px;
+  max-height: 52px;
+  max-width: 100%;
+  object-fit: contain;
+  transition: transform .25s ease;
+}
+
+/* Only where there is a pointer to hover with. On a phone a tap counts as hovering and the
+   hover stays until you tap somewhere else, so the logo was left tilted after tapping it. */
+@media (hover: hover) {
+  #header .brand.company-logo-and-name .logo a:hover img {
+    transform: rotate(-8deg);
+  }
+}
+
+#header .nav a,
+#header #sb_appended_menu_item > a {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* The theme draws a 3px bottom border on each link, which becomes the pink marker on hover.
+   The page you are on is shown by pink text alone, with no underline (Ross, 27 Sep 2026). */
+#header .nav-wrapper #sb_menu .nav li a {
+  transition: border-bottom-color .15s ease, color .15s ease;
+}
+
+#header .nav-wrapper #sb_menu .nav li:hover a {
+  border-bottom-color: var(--hangout-pink);
+}
+
+#header .nav-wrapper #sb_menu .nav li.active a,
+#header .nav-wrapper #sb_menu .nav li.menu-item.active a {
+  color: var(--hangout-pink);
+  border-bottom-color: transparent;
+}
+
+/* On the black bar itself (wide screens), the top-level links are white and the pink is the
+   lighter one that reads on black. The More drop-down and the phone menu stay white panels
+   with dark links, as the theme draws them. Below 1025px the theme folds every link into the
+   phone menu. */
+@media (min-width: 1025px) {
+  #header .nav-wrapper #sb_menu .nav > li.menu-item > a,
+  #header .nav-wrapper #sb_menu .nav > #sb_appended_menu_item > a {
+    color: #FFFFFF;
+  }
+
+  #header .nav-wrapper #sb_menu .nav > li.menu-item:hover > a,
+  #header .nav-wrapper #sb_menu .nav > #sb_appended_menu_item:hover > a {
+    border-bottom-color: var(--hangout-pink-lit);
+  }
+
+  #header .nav-wrapper #sb_menu .nav > li.menu-item.active > a {
+    color: var(--hangout-pink-lit);
+    border-bottom-color: transparent;
+  }
+}
+
+#header #sb_appended_child_menu {
+  border-radius: 0;
+}
+
+/* Home, first in the bar. SimplyBook shows only the first three menu items in the bar and puts
+   the rest under More (settings-checklist.md §7), and Book, Memberships and Contact Us have
+   those places. So Home is last in the admin's menu order, hidden from More here, and the bar's
+   Home is drawn from the logo's own link, which already goes home: the logo's column stretches
+   up to the menu, and the word sits at its right-hand end, just left of Book. The "/ ''"
+   keeps screen readers on the logo's own name. Pink on the home page, as the other links are
+   on theirs. Below 1025px every item is in the phone menu instead, where Home is moved to the
+   top. */
+#header .nav-wrapper #sb_menu .nav #sb_appended_menu_item #sb_appended_child_menu > li.menu-item:has(> a[href="#"]) {
+  display: none;
+}
+
+@media (min-width: 1025px) {
+  #header .row > .col-md-3 {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  #header .row > .col-md-9 {
+    display: flex;
+    align-items: center;
+    flex: 0 0 auto;
+    width: auto;
+  }
+
+  /* Centred on the bar (Ross, 27 Sep 2026: the links sat high). The theme leaves the controls
+     at the top of the logo's column and puts 5px under each link; the links, the basket and
+     the account button now share the bar's middle line with the logo. */
+  #header .nav-wrapper #sb_menu .nav > li.menu-item,
+  #header .nav-wrapper #sb_menu .nav > #sb_appended_menu_item {
+    margin-bottom: 0;
+  }
+
+  #header .brand.company-logo-and-name .logo a::after {
+    content: 'Home';
+    content: 'Home' / '';
+    position: absolute;
+    top: 50%;
+    right: -6px;
+    padding: 0 10px 3px;
+    border-bottom: 3px solid transparent;
+    transform: translateY(calc(-50% + 3px));   /* the word, not its underline, on the middle line */
+    color: #FFFFFF;
+    font-family: var(--hangout-display);
+    font-size: 15px;
+    font-weight: 600;
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+    white-space: nowrap;
+    transition: border-bottom-color .15s ease, color .15s ease;
+  }
+
+  #header .brand.company-logo-and-name .logo a:hover::after {
+    border-bottom-color: var(--hangout-pink-lit);
+  }
+
+  #header:has(#sb_appended_child_menu > li.menu-item.active > a[href="#"]) .brand.company-logo-and-name .logo a::after {
+    color: var(--hangout-pink-lit);
+    border-bottom-color: transparent;
+  }
+
+  /* The logo turns when the logo itself is pointed at, not the word Home. */
+  #header .brand.company-logo-and-name .logo a:hover img {
+    transform: none;
+  }
+}
+
+@media (min-width: 1025px) and (hover: hover) {
+  #header .brand.company-logo-and-name .logo a img:hover {
+    transform: rotate(-8deg);
+  }
+}
+
+/* The phone menu (below 1025px the theme folds every link into it): a black sheet under the
+   bar, every page in large type, rather than a small white box that scrolls after six links.
+   The bar and its burger stay on top so the menu can be closed where it was opened. */
+@media (max-width: 1024px) {
+  #header .nav-wrapper.clearfix {            /* .clearfix: to outrank the theme's .active rule */
+    top: 68px;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    width: auto;
+    height: auto;
+    margin: 0;
+    padding: 18px 24px 40px;
+    justify-content: flex-end;               /* the theme stacks it column-reverse: this is the top */
+    align-items: stretch;
+    overflow-y: auto;
+    border-radius: 0;
+    background-color: var(--hangout-ink);
+    box-shadow: none;
+  }
+
+  #header .nav-wrapper #sb_menu .nav {
+    display: flex;
+    flex-direction: column;
+    max-height: none;
+    overflow: visible;
+    text-align: left;
+  }
+
+  /* Home is last in the admin's menu order (see Home, above); here it goes first. */
+  #header .nav-wrapper #sb_menu .nav > li.menu-item:has(> a[href="#"]) {
+    order: -1;
+  }
+
+  #header .nav-wrapper #sb_menu .nav li.menu-item {
+    display: block;
+    margin: 0;
+    padding: 0;
+    text-align: left;
+    border-bottom: 1px solid var(--hangout-rule-dark);
+  }
+
+  #header .nav-wrapper #sb_menu .nav li.menu-item a {
+    display: block;
+    padding: 12px 0;
+    border-bottom: 0;
+    font-size: 30px;
+    font-weight: 600;
+    letter-spacing: 0.02em;
+    color: #FFFFFF;
+  }
+
+  #header .nav-wrapper #sb_menu .nav li.active a,
+  #header .nav-wrapper #sb_menu .nav li.menu-item.active a {
+    color: var(--hangout-pink-lit);
+  }
+}
+
+@media (max-width: 767px) {
+  #header .nav-wrapper.clearfix {
+    top: 60px;
+  }
+}
+
+/* Basket and account: quiet outlines on the black bar, not pale pink discs. */
+#header .items-wrapper #sb_cart .item-container,
+#header .items-wrapper #sb_client_info .item-container {
+  background-color: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
+  color: #FFFFFF;
+  transition: box-shadow .15s ease;
+}
+
+#header .items-wrapper #sb_cart .item-container i,
+#header .items-wrapper #sb_client_info .item-container i {
+  color: #FFFFFF;
+}
+
+#header .items-wrapper #sb_cart .item-container:hover,
+#header .items-wrapper #sb_client_info .item-container:hover {
+  box-shadow: inset 0 0 0 1px var(--hangout-pink-lit);
+}
+
+/* The burger is hard-coded to a blue that belongs to no part of this brand. */
+#header .nav-trigger {
+  background: transparent;
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, .28);
+  color: #FFFFFF;
+}
+
+
+/* ============================================================ 3  Hero ============== */
+
+/* The home page opens on the wall itself: a sharp photo, the name set as big as the screen
+   allows, and a pink facet cut across the foot, as the painted walls are cut. The photo is
+   uploaded as it is (settings-checklist.md §2); the shading that keeps the words readable is
+   here, so a different photo can go in later without re-editing it. Measured on the
+   rendered page by tools/measure-hero.js.
+
+   The banner belongs to the home page. On every other page it pushed the content a full
+   screen down, so every booking step began with a scroll. SimplyBook tags each page on
+   #sb_main (page--index is home). */
+#sb_main:not(.page--index) #main-buttons {
+  display: none;
+}
+
+#main-buttons {
+  position: relative;
+  overflow: hidden;
+  text-align: left;
+  background-color: var(--hangout-ink);
+  /* the foot of the banner is cut on a slant; the pink facet below sits along the cut */
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - var(--hangout-cut)), 0 100%);
+  --hangout-cut: clamp(36px, 7vw, 110px);
+}
+
+/* Shade: dark along the left, where the words are, and along the foot. On a phone the words
+   cross the whole photo, so the whole photo is shaded. */
+#main-buttons::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    linear-gradient(90deg, rgba(20, 18, 20, .86) 0%, rgba(20, 18, 20, .7) 42%, rgba(20, 18, 20, .42) 68%, rgba(20, 18, 20, .08) 84%, rgba(20, 18, 20, 0) 100%),
+    linear-gradient(0deg, rgba(20, 18, 20, .78) 0%, rgba(20, 18, 20, 0) 46%),
+    linear-gradient(180deg, rgba(20, 18, 20, .5) 0%, rgba(20, 18, 20, 0) 22%);
+  pointer-events: none;
+}
+
+/* The facet: a pink wedge along the slanted foot, widest at the right. */
+#main-buttons::after {
+  content: '';
+  position: absolute;
+  right: 0;
+  bottom: 0;
+  width: 62%;
+  height: calc(var(--hangout-cut) * 1.9);
+  background-color: var(--hangout-pink-logo);
+  clip-path: polygon(100% 0, 100% 52%, 0 100%);
+  pointer-events: none;
+}
+
+@media (max-width: 767px) {
+  #main-buttons::before {
+    background:
+      linear-gradient(0deg, rgba(20, 18, 20, .85) 0%, rgba(20, 18, 20, .6) 40%, rgba(20, 18, 20, .6) 75%, rgba(20, 18, 20, .45) 100%);
+  }
+}
+
+#main-buttons > .container-fluid {
+  position: relative;
+  z-index: 1;
+}
+
+#main-buttons .wrapper {
+  height: auto;
+  min-height: clamp(540px, calc(100vh - 68px), 920px);
+  align-items: flex-end;
+}
+
+#main-buttons .wrapper .inner {
+  margin: 0;
+  padding: 120px 0 calc(var(--hangout-cut) + clamp(44px, 6vw, 84px));
+}
+
+#main-buttons .wrapper .inner .company-name,
+#main-buttons .wrapper .inner .company-name.company-logo-and-name {
+  display: block;
+  max-width: 6.4em;                         /* "The Hangout" on one line, "Climbing" on the next */
+  font-size: clamp(56px, 9.4vw, 150px);
+  font-weight: 700;
+  line-height: .86;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  text-shadow: none;
+  color: #FFFFFF;
+}
+
+/* One line above the name that says what and where. */
+#main-buttons .wrapper .inner .company-name::before {
+  content: 'Bouldering on the Isle of Portland';
+  display: block;
+  margin-bottom: clamp(14px, 1.6vw, 22px);
+  font-family: 'Noto Sans', sans-serif;
+  font-size: clamp(16px, 1.35vw, 19px);
+  font-weight: 500;
+  line-height: 1.4;
+  letter-spacing: 0;
+  text-transform: none;
+  color: #FFFFFF;
+}
+
+#main-buttons .wrapper .inner .bar {
+  justify-content: flex-start;
+  gap: 12px;
+  padding: clamp(26px, 3vw, 40px) 0 0;
+}
+
+#main-buttons .btn a {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+/* Book now leads: the solid pink button, first in line. Show on map steps back to an
+   outline on the photo. Same links, same words; only the order they are drawn in. */
+#main-buttons .wrapper .inner .bar .btn.book {
+  order: -1;
+}
+
+#main-buttons .wrapper .inner .bar .btn {
+  border-radius: 0;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+
+#main-buttons .wrapper .inner .bar .btn a {
+  display: inline-flex;
+  align-items: center;
+  min-height: 54px;
+}
+
+/* The theme paints this button from a two-id rule (#main #main-buttons .btn.map). */
+#main #main-buttons .wrapper .inner .bar .btn.map {
+  background: transparent;
+  box-shadow: inset 0 0 0 2px rgba(255, 255, 255, .7);
+}
+
+#main #main-buttons .wrapper .inner .bar .btn.map:hover {
+  background-color: rgba(255, 255, 255, .12);
+  box-shadow: inset 0 0 0 2px #FFFFFF;
+}
+
+
+/* ================================== 4  Home: the introduction and opening hours ===== */
+
+/* The home page reads as a sequence of bands rather than a stack of white boxes: the
+   introduction in large type on the light page with the opening hours beside it, then the
+   memberships on black, the photos, and the map on black running into the footer.
+
+   Row one is the description (wide) and the opening hours (a black card on the right).
+   The Contact us panel's column is hidden (Ross, 23 Sep 2026): phone, email and the message
+   form live on the Contact Us page. */
+#content-view .row-eq-height-xs > .col-sm-4:has(> #contacts) {
+  display: none;
+}
+
+#content-view .row-eq-height-xs {
+  padding: clamp(48px, 7vw, 104px) 0 clamp(56px, 7vw, 112px);
+}
+
+@media (min-width: 992px) {
+  #content-view .row-eq-height-xs {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 340px;
+    column-gap: clamp(40px, 6vw, 96px);
+    align-items: start;
+  }
+
+  /* Bootstrap's clearfix pseudo-elements would each take a grid cell. */
+  #content-view .row-eq-height-xs::before,
+  #content-view .row-eq-height-xs::after {
+    display: none;
+  }
+
+  #content-view .row-eq-height-xs > [class*=col-] {
+    width: auto;
+    float: none;
+  }
+
+  #content-view .row-eq-height-xs > .col-sm-4:has(> #about-us) {
+    order: -1;
+  }
+
+  #content-view .row-eq-height-xs > .col-sm-4:has(> #schedule) {
+    position: sticky;
+    top: 96px;                              /* under the sticky header */
+  }
+}
+
+@media (max-width: 991px) {
+  #content-view .row-eq-height-xs {
+    display: flex;
+    flex-direction: column;
+  }
+
+  #content-view .row-eq-height-xs > [class*=col-] {
+    width: 100%;
+  }
+
+  #content-view .row-eq-height-xs > .col-sm-4:has(> #about-us) {
+    order: -1;
+  }
+
+  #content-view .row-eq-height-xs > .col-sm-4:has(> #schedule) {
+    max-width: 520px;
+    margin-top: 40px;
+  }
+}
+
+/* The description: no panel, just type. */
+#about-us.section {
+  background: transparent;
+  box-shadow: none;
+  border-radius: 0;
+}
+
+#about-us .section-pd {
+  padding: 0;
+}
+
+/* Its title repeats the name the banner has just shown, so it is kept for screen readers
+   and hidden from view. */
+#about-us .title-main {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+#about-us .txt {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: clamp(28px, 4vw, 56px);
+  font-size: 17px;
+  line-height: 1.65;
+  color: #3A363A;                           /* 9.9:1 on the page */
+}
+
+#about-us .txt p {
+  margin: 0 0 18px;
+}
+
+/* The first sentence is the statement: what this place is, in the display face. */
+#about-us .txt p:first-child {
+  grid-column: 1 / -1;
+  max-width: 21ch;
+  margin-bottom: clamp(30px, 4vw, 52px);
+  font-family: var(--hangout-display);
+  font-size: clamp(32px, 4.1vw, 60px);
+  font-weight: 600;
+  line-height: 1.04;
+  letter-spacing: -0.005em;
+  color: var(--hangout-ink);
+}
+
+/* The next two paragraphs (the walls; kit and drinks) side by side under a black rule. */
+#about-us .txt p:nth-child(2),
+#about-us .txt p:nth-child(3) {
+  padding-top: 18px;
+  border-top: 3px solid var(--hangout-ink);
+}
+
+/* Then booking ahead, and the waiver: a closing note across both columns. */
+#about-us .txt p:nth-child(n+4) {
+  grid-column: 1 / -1;
+  margin-bottom: 6px;
+}
+
+#about-us .txt p:nth-child(4) {
+  margin-top: 18px;
+  padding-top: 22px;
+  border-top: 1px solid rgba(20, 18, 20, .14);
+}
+
+#about-us .txt p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 767px) {
+  #about-us .txt {
+    display: block;
+    font-size: 16px;
+  }
+
+  #about-us .txt p:nth-child(3) {
+    border-top: 0;
+    padding-top: 0;
+  }
+}
+
+/* Links inside rich-text fields (the waiver link, anything Ross adds later) fall through to
+   Bootstrap's default blue, which is neither the brand nor the theme accent. */
+#about-us .txt a,
+.section .txt a,
+.txt.full a,
+.license--content a {
+  color: var(--hangout-pink);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+/* Opening hours: a black card with a cut corner, the times large enough to read from across
+   a room. */
+#schedule.section {
+  border-radius: 0;
+  background-color: var(--hangout-ink);
+  box-shadow: none;
+  clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%);
+}
+
+#schedule .section-pd {
+  padding: 30px 30px 26px;
+}
+
+#schedule .title-main {
+  margin-bottom: 14px;
+  color: #FFFFFF;
+}
+
+#content-view #schedule .overview tr td {
+  padding-top: 11px;
+  padding-bottom: 11px;
+  border-color: var(--hangout-rule-dark);
+}
+
+#content-view #schedule .overview tr td.day {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: var(--hangout-fog);
+}
+
+#content-view #schedule .overview tr td.time {
+  font-family: var(--hangout-display);
+  font-size: 18px;
+  font-weight: 500;
+  font-variant-numeric: tabular-nums;
+  text-align: right;
+  color: #FFFFFF;
+}
+
+#schedule .overview tr + tr td {
+  border-top: 1px solid var(--hangout-rule-dark);
+}
+
+/* The Contact us panel (hidden on the home page, but SimplyBook still fills it). */
+#contacts .info li {
+  padding: 7px 0;
+}
+
+#contacts .links a {
+  color: var(--hangout-pink);
+  overflow-wrap: anywhere;
+}
+
+#contacts .links.emails,
+#contacts .links.phone,
+#contacts .links.website {
+  white-space: normal;
+  overflow: visible;
+  text-overflow: clip;
+}
+
+#contacts .links.emails a,
+#contacts .links.website a {
+  white-space: normal;
+  font-size: 15px;
+}
+
+/* ---- Bands -----------------------------------------------------------------------------
+   A band is a section painted edge to edge while its content stays in the page column: the
+   colour is the section's own background, spread sideways by a box-shadow and trimmed by a
+   clip-path, which also cuts the slanted top edge. Nothing is widened, so nothing can make the
+   page scroll sideways. The colour is a solid fill so the contrast checks can read it. */
+#sb_membership_module #membership-plugin,
+#content-view .row-mg:has(#sb_map) {
+  position: relative;
+  background-color: var(--hangout-ink);
+  box-shadow: 0 0 0 100vmax var(--hangout-ink);
+  clip-path: polygon(calc(50% - 50vw) 0, calc(50% + 50vw) calc(-1 * var(--hangout-slant)), calc(50% + 50vw) 100%, calc(50% - 50vw) 100%);
+  --hangout-slant: clamp(36px, 5vw, 80px);
+}
+
+#sb_membership_module #membership-plugin {
+  margin-top: var(--hangout-slant);
+  padding: clamp(40px, 5vw, 72px) 0 clamp(48px, 6vw, 88px);
+}
+
+#content-view .row-mg:has(#sb_map) {
+  margin-top: calc(var(--hangout-slant) + 24px);
+  margin-bottom: 0;
+  padding: clamp(32px, 4vw, 56px) 0 0;
+}
+
+/* The map band runs straight into the footer. */
+#sb_main.page--index #content-view {
+  padding-bottom: 0;
+}
+
+/* Below the 1200px column's full width: a proper gutter on the pages that are read. The
+   theme's 10px puts text almost on the glass. (The booking steps keep theirs: every pixel of
+   width goes to the cards.) */
+@media (max-width: 1239px) {
+  #main-buttons > .container-fluid.column,
+  #content-view > .container-fluid.column,
+  #reviews-view .page-pd > .container-fluid.column,
+  #membership-view .page-pd > .container-fluid.column,
+  #sb_main.page--gallery #gallery-view > .section-pd {
+    padding-left: 20px;
+    padding-right: 20px;
+  }
+}
+
+/* Section titles: the display face, large. On the black bands they turn white. */
+.title-section {
+  font-size: clamp(30px, 3.4vw, 46px);
+  line-height: 1.05;
+  letter-spacing: -0.005em;
+}
+
+#content-view .title-section {
+  margin-bottom: clamp(22px, 2.6vw, 34px);
+}
+
+#sb_membership_module #membership-plugin .title-section,
+#content-view .row-mg:has(#sb_map) .title-section {
+  color: #FFFFFF;
+}
+
+
+/* ============================================================ 5  Cards ============= */
+
+.service-item .tab,
+.membership-item .tab,
+.promotion-item .tab {
+  box-shadow: 0 1px 2px rgba(20, 18, 20, .06), 0 8px 24px rgba(20, 18, 20, .06);
+  transition: box-shadow .15s ease, transform .15s ease;
+}
+
+.service-item .tab:hover,
+.membership-item .tab:hover,
+.promotion-item .tab:hover {
+  box-shadow: 0 2px 4px rgba(20, 18, 20, .08), 0 14px 32px rgba(20, 18, 20, .12);
+}
+
+/* The theme clamps the excerpt and drops "Read more" on top of the last line, so the two
+   collide. Fade the text out behind it. */
+.service-item .read-more {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  font-size: 13px;
+  letter-spacing: 0.08em;
+  padding-left: 26px;
+  background: linear-gradient(90deg, rgba(255, 255, 255, 0) 0, #fff 22px, #fff 100%);
+}
+
+.service-item .bar-service .time {
+  color: var(--hangout-muted);
+}
+
+/* Services come in two categories, Adults and Kids, with two services each. The theme's three
+   across leaves every category row a card short, so on wide screens use two across, as the
+   theme already does below 1025px. */
+@media (min-width: 1025px) {
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item {
+    width: 50%;
+  }
+}
+
+/* The Adults / Kids headings: the theme gives each 20px above and 30px below. */
+#sb-timeline #steps #steps-content .step-content .split-title {
+  margin-top: 4px;
+}
+
+#sb-timeline #steps #steps-content .step-content .split-title .title-section {
+  padding-bottom: 14px;
+  font-size: 24px;
+  font-weight: 600;                         /* the theme drops these to 500 */
+}
+
+/* Photo beside the text rather than above it, from tablet width up, so the whole Service step
+   (both categories, all four cards) fits on one laptop screen: each card drops from about
+   600px tall to under 260. On phones the photo stays on top, just shorter. */
+@media (min-width: 768px) {
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .tab .excerpt-info {
+    flex-direction: row;
+    align-items: stretch;
+  }
+
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .tab.tab-col .excerpt-info .preloader {
+    flex: 0 0 36%;
+    width: 36%;
+    height: auto;
+    padding-bottom: 0;                      /* the theme's 16:9 box is a 56.25% bottom padding */
+    border-radius: 0;
+  }
+
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .preloader .user.img,
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .preloader .user-img {
+    height: 100%;
+  }
+
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .tab-pd {
+    flex: 1 1 auto;
+    min-width: 0;
+    padding: 16px 22px;
+  }
+
+  /* Two lines of the description, not three; the rest is a Read more away. */
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .tab.tab-col .txt.short {
+    height: 46px;
+  }
+}
+
+@media (max-width: 767px) {
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .tab.tab-col .excerpt-info .preloader {
+    height: auto;
+    padding-bottom: 43.75%;                 /* 16:7, down from the theme's 16:9 */
+  }
+
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .preloader .user.img,
+  #sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .preloader .user-img {
+    height: 100%;
+  }
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content .service-step .service-item .cap.short {
+  height: auto;
+  margin-bottom: 8px;
+}
+
+/* The perk bullets.
+   Don't try to replace the marker. On the Memberships page the theme sets
+   `list-style: initial !important` on `.membership-item .txt li`, so a custom dot ends up
+   sitting next to the theme's disc rather than instead of it. Colour the real marker and give
+   the list some room instead. */
+.membership-item .tab .txt.short ul,
+.membership-item .tab .txt.full ul {
+  margin: 10px 0 12px;
+}
+
+.membership-item .tab .txt.short ul li,
+.membership-item .tab .txt.full ul li {
+  margin-bottom: 6px;
+  line-height: 1.45;
+}
+
+.membership-item .tab .txt.short ul li::marker,
+.membership-item .tab .txt.full ul li::marker {
+  color: var(--hangout-pink);
+}
+
+/* The Read more close button sits on top of the card photo with nothing behind it, so on a
+   pale photo it disappears. */
+.tab.tab-col .full-info .close-full-info {
+  background: rgba(20, 18, 20, .55);
+  color: #fff;
+  border-radius: 50%;
+  width: 34px;
+  height: 34px;
+  line-height: 34px;
+  text-align: center;
+}
+
+.tab.tab-col .full-info .close-full-info:hover {
+  background: var(--hangout-pink);
+}
+
+
+/* Square corners on every card and panel (redesign, 25 Sep 2026): the site's shapes are cut,
+   not rounded, like the triangles on the walls. The theme's own 3px corners go too. */
+#schedule.section,
+#about-us.section,
+#contacts.section,
+.service-item .tab,
+.promotion-item .tab {
+  border-radius: 0;
+}
+
+.service-item .tab.tab-col .excerpt-info .preloader,
+.promotion-item .tab.tab-col .excerpt-info .preloader {
+  border-radius: 0;
+}
+
+/* A light wash along the foot of each service photo: the same dark-over-photo
+   treatment as the hero and the membership cards, at a strength that still shows the wall. */
+.service-item .tab .excerpt-info > .preloader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(20, 18, 20, 0) 40%, rgba(20, 18, 20, .5) 100%);
+  pointer-events: none;
+}
+
+/* ---- Membership cards ----------------------------------------------------------------
+   The live card stacks eight things: photo, name, excerpt, an "Attached service(s)" table,
+   length, session cap, a "Starts from" date box, a renewal line and the button. With only two
+   plans (revision of 23 Sep 2026) each card can afford to be calm: the plan's own photo
+   fills the whole card behind a dark wash; on top sit the name, one
+   line of description, two small tags and one button that carries the price.
+   Redesign, 25 Sep 2026: the photo is sharp now, and shows through the top of the card; the
+   black wash starts halfway down, where the words begin. Corners are square, with the same
+   cut corner as the opening-hours card.
+
+   Hidden, not lost:
+   - "Attached service(s)" — the plan name already says adult or kids.
+   - "Starts from today" — the start date then defaults to today, which is what the copy says.
+   - "Renewal £32.00" — the button says the same price; "paid monthly" is in the description.
+     Keep this hidden: once a client holds a plan, SimplyBook swaps its Buy button for this
+     line as a "renew" link, and hiding it is what stops a member buying the plan twice.
+   "Read more" is hidden too (Ross, 23 Sep 2026), so the lead line carries the card.
+
+   Every rule is written twice, once for the home-page module and once for the Memberships
+   page, because the theme styles each with its own id-prefixed selectors and those have to be
+   out-ranked, not fought with !important. */
+
+#sb_membership_module .membership-item .tab,
+#membership-view #sb_membership_list_container .membership-item .tab {
+  position: relative;
+  height: 100%;
+  overflow: hidden;
+  border-radius: 0;
+  background-color: var(--hangout-ink-raised);   /* shows while the photo loads, and behind it */
+  box-shadow: none;
+  color: #fff;
+  clip-path: polygon(0 0, calc(100% - 28px) 0, 100% 28px, 100% 100%, 0 100%);
+}
+
+#sb_membership_module .membership-item .tab .excerpt-info,
+#membership-view #sb_membership_list_container .membership-item .tab .excerpt-info {
+  display: flex;                            /* the theme drops to display: block on phones */
+  flex-direction: column;
+  justify-content: flex-end;
+  min-height: 420px;
+  height: 100%;
+}
+
+#sb_membership_module .membership-item .tab .excerpt-info > .preloader,
+#membership-view #sb_membership_list_container .membership-item .tab .excerpt-info > .preloader {
+  position: absolute;
+  inset: 0;
+  padding: 0;
+  height: auto;
+  border-radius: 0;
+  z-index: 0;
+}
+
+#sb_membership_module .membership-item .tab .excerpt-info > .preloader .user.img,
+#membership-view #sb_membership_list_container .membership-item .tab .excerpt-info > .preloader .user.img {
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+
+#sb_membership_module .membership-item .tab .excerpt-info > .preloader .user-img,
+#membership-view #sb_membership_list_container .membership-item .tab .excerpt-info > .preloader .user-img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scale(1.01);
+  transition: transform .8s cubic-bezier(.2, .7, .2, 1);
+}
+
+#sb_membership_module .membership-item .tab:hover .excerpt-info > .preloader .user-img,
+#membership-view #sb_membership_list_container .membership-item .tab:hover .excerpt-info > .preloader .user-img {
+  transform: scale(1.06);
+}
+
+#sb_membership_module .membership-item .tab .excerpt-info > .preloader::after,
+#membership-view #sb_membership_list_container .membership-item .tab .excerpt-info > .preloader::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background: linear-gradient(180deg, rgba(30, 26, 30, .1) 0%, rgba(30, 26, 30, .35) 30%, rgba(30, 26, 30, .92) 58%, #1E1A1E 76%);
+}
+
+#sb_membership_module .membership-item .tab .excerpt-info > .tab-pd,
+#membership-view #sb_membership_list_container .membership-item .tab .excerpt-info > .tab-pd {
+  z-index: 1;
+  flex: 0 0 auto;                           /* the Memberships page stretches it to full height */
+  height: auto;
+  padding: 28px 30px 30px;
+}
+
+#sb_membership_module .membership-item .tab .cap.short,
+#membership-view #sb_membership_list_container .membership-item .tab .cap.short {
+  color: #fff;
+  font-size: 38px;
+  line-height: 1.05;
+  height: auto;
+  max-height: none;
+  margin-bottom: 10px;
+}
+
+#sb_membership_module .membership-item .tab .txt.short,
+#membership-view #sb_membership_list_container .membership-item .tab .txt.short,
+#sb_membership_module .membership-item .tab .txt.short p,
+#membership-view #sb_membership_list_container .membership-item .tab .txt.short p {
+  color: #E6E1E5;
+  font-size: 17px;
+  line-height: 1.5;
+}
+
+#sb_membership_module .membership-item .tab .txt.short,
+#membership-view #sb_membership_list_container .membership-item .tab .txt.short {
+  height: auto;
+  max-height: none;
+  margin-bottom: 14px;
+}
+
+#sb_membership_module .membership-item .tab .txt.short p,
+#membership-view #sb_membership_list_container .membership-item .tab .txt.short p {
+  margin-bottom: 6px;
+}
+
+/* No "Read more" on the cards (Ross, 23 Sep 2026): the lead line and the two tags are the
+   whole card. The full description stays in SimplyBook but is not reachable from the card. */
+#sb_membership_module .membership-item .tab .read-more,
+#membership-view #sb_membership_list_container .membership-item .tab .read-more {
+  display: none;
+}
+
+#sb_membership_module .membership-item .tab .item__connected-services,
+#membership-view #sb_membership_list_container .membership-item .tab .item__connected-services,
+#sb_membership_module .membership-item .tab .start-date-btn,
+#membership-view #sb_membership_list_container .membership-item .tab .start-date-btn,
+#sb_membership_module .membership-item .tab .mb.btn-bar .info-container,
+#membership-view #sb_membership_list_container .membership-item .tab .mb.btn-bar .info-container {
+  display: none;
+}
+
+#sb_membership_module .membership-item .tab .date-bar,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar {
+  justify-content: flex-start;
+  flex-wrap: wrap;
+  gap: 8px;
+  height: auto;
+  margin: 0 0 18px;
+  border: 0;
+}
+
+#sb_membership_module .membership-item .tab .date-bar .date-item,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar .date-item,
+#sb_membership_module .membership-item .tab .date-bar .sessions-num-wrapper,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar .sessions-num-wrapper {
+  display: inline-flex;
+  align-items: center;
+  width: auto;
+  padding: 5px 12px;
+  border: 1px solid rgba(255, 255, 255, .28);
+  border-radius: 0;
+  background: transparent;
+}
+
+#sb_membership_module .membership-item .tab .date-bar .date,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar .date,
+#sb_membership_module .membership-item .tab .date-bar .session-remind,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar .session-remind,
+#sb_membership_module .membership-item .tab .date-bar .icon,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar .icon,
+#sb_membership_module .membership-item .tab .date-bar i,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar i {
+  color: #fff;
+  font-size: 14px;
+}
+
+/* Both tags in the same face; the length otherwise picks up the Oswald used for data. */
+#sb_membership_module .membership-item .tab .date-bar .date,
+#membership-view #sb_membership_list_container .membership-item .tab .date-bar .date {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 400;
+}
+
+#sb_membership_module .membership-item .tab .mb.btn-bar,
+#membership-view #sb_membership_list_container .membership-item .tab .mb.btn-bar {
+  height: auto;
+  margin-top: 0;
+}
+
+#sb_membership_module .membership-item .tab .active-container a.btn,
+#membership-view #sb_membership_list_container .membership-item .tab .active-container a.btn {
+  min-height: 52px;
+  line-height: 36px;
+  font-size: 16px;
+  border-radius: 0;
+  box-shadow: none;
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 12px), calc(100% - 12px) 100%, 0 100%);
+}
+
+/* Two plans: two wide cards filling the row, rather than two thirds of a three-column row
+   with a gap where the third card used to be. */
+@media (min-width: 768px) {
+  #sb_membership_module_list_container,
+  #sb_membership_list_container > div {
+    display: flex;
+    flex-wrap: wrap;
+  }
+
+  #sb_membership_module_list_container > .membership-item,
+  #sb_membership_list_container .membership-item {
+    flex: 0 0 50%;
+    width: 50%;
+    max-width: 50%;
+  }
+}
+
+#sb_membership_module_list_container > .membership-item,
+#sb_membership_list_container .membership-item {
+  margin-bottom: 24px;
+}
+
+/* With every plan already on the home page, "See all plans" has nothing more to show. */
+#membership-plugin .see-more {
+  display: none;
+}
+
+
+/* ============================================================ 6  Buttons =========== */
+
+.btn.custom,
+.service-item .btn.select a,
+.membership-item .active-container a.btn,
+.promotion-item .btn.select,
+button.sb-next,
+.send-message-button,
+#sb_sign_in_btn,
+#sb_sign_up_btn {
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 15px;
+}
+
+.service-item .btn.select a,
+.membership-item .active-container a.btn,
+.promotion-item .btn.select,
+button.sb-next {
+  min-height: 46px;
+}
+
+/* The contact form's "Make an appointment" link is hidden (Ross, 27 Sep 2026): Book is in the
+   menu on every page, and on the contact page the link sat beside Send message as a second
+   choice nobody came there to make. */
+.sb-widget-form .buttons .open-booking-widget-button {
+  display: none;
+}
+
+
+/* ====================================================== 7  Booking flow ============ */
+
+/* A slimmer step bar, and less air under it (Ross, 24 Sep 2026: every step should fit on one
+   screen). The theme draws it 88px tall with an 85px gap below (it held "Our time", now hidden). The
+   arrow between steps is two 44px borders; they have to shrink with the bar. */
+@media (min-width: 768px) {
+  #sb-timeline #steps-nav {
+    min-height: 64px;
+    margin-bottom: 50px;
+  }
+
+  #sb-timeline #steps-nav #menu-active-bg {
+    min-height: 64px;
+  }
+
+  #sb-timeline #steps-nav li {
+    height: 64px;
+  }
+
+  #sb-timeline #steps-nav li:first-child::after,
+  #sb-timeline #steps-nav li.passed + li:not(.passed)::after {
+    border-top-width: 32px;
+    border-bottom-width: 32px;
+  }
+
+  #sb-timeline #steps #time-settings {
+    top: 66px;
+  }
+}
+
+/* No Provider step in the bar (Ross, 24 Sep 2026). Every service has one provider, so
+   SimplyBook skips straight from Add-ons to Time and nobody ever sees that step; the label
+   only made the bar look as if a step had been missed. It is always third from the end
+   (Provider, Time, Client), even if a location or category step is ever added in front.
+   IF A SERVICE EVER GETS A SECOND PROVIDER, delete this rule: the step will then be real. */
+#sb-timeline #steps-nav li.step_info_item:nth-last-child(3) {
+  display: none;
+}
+
+/* Moving between steps: each step's content eases in (a short fade and a lift of a few
+   pixels) instead of snapping into place, and the step bar's colour slides from one step to
+   the next. SimplyBook draws every step as a fresh element inside #sb_booking_content, so an
+   animation on that element runs once per step. "backwards" rather than "both": once it has
+   played it leaves no transform behind, which would trap the Read more pop-ups inside. */
+@keyframes hangout-step-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+#sb_booking_content > div {
+  animation: hangout-step-in .3s ease-out backwards;
+}
+
+#sb-timeline #steps-nav li,
+#sb-timeline #steps-nav #menu-active-bg {
+  transition: background-color .3s ease, color .3s ease, width .3s ease;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  #sb_booking_content > div {
+    animation: none;
+  }
+
+  #sb-timeline #steps-nav li,
+  #sb-timeline #steps-nav #menu-active-bg {
+    transition: none;
+  }
+}
+
+#steps-nav .step_info_item .title-sub {
+  font-size: 13px;
+  opacity: .92;
+}
+
+/* No "Our time" clock above the steps (Ross, 27 Sep 2026): everyone booking is local. */
+#sb_booking_company_time {
+  display: none;
+}
+
+#sb_back_button a {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 13px;
+}
+
+/* Add-ons */
+.paid-attr__item {
+  border-radius: 0;
+  border: 1px solid rgba(20, 18, 20, .1);
+  transition: border-color .12s ease, box-shadow .12s ease;
+}
+
+.paid-attr__item:hover {
+  border-color: var(--hangout-pink);
+}
+
+/* A ticked add-on gets `background: #fafafa` from the theme and nothing else — almost
+   invisible. `.selected` is the theme's own class (`.product-item.selected`), so this just
+   makes it say something. */
+.paid-attr__item.selected {
+  border-color: var(--hangout-pink);
+  background: #FDF3F7;
+}
+
+.paid-attr__item .item-price {
+  font-size: 17px;
+}
+
+/* The add-on description is fixed at a single 23px line and clipped with no ellipsis, so at
+   phone width "One pair of climbing shoes for your session." loses its last word. Let it run to
+   two lines. The theme's rule carries four id selectors, hence !important — see the note in the
+   calendar block. */
+.paid-attr__item .item-description {
+  height: auto !important;
+  max-height: 46px;
+  margin-bottom: 12px;
+}
+
+.paid-attribute-footer {
+  border-radius: 0;
+}
+
+.paid-attribute-totals__subtotal b {
+  font-family: var(--hangout-display);
+  font-size: 20px;
+  color: var(--hangout-ink);
+}
+
+/* The sidebar beside the add-ons, time and details steps. The provider card is a 300px
+   illustration of "James", who is also named in the step bar and is the only provider, so it
+   goes; the service photo is cut to a strip. */
+.timeline-sidebar .provider-item {
+  display: none;
+}
+
+.timeline-sidebar .service-item .tab.tab-col .excerpt-info .preloader {
+  padding-bottom: 36%;
+}
+
+/* Calendar. 40px of empty space above the day names; the chain is the theme's own. */
+#sb-timeline #steps #steps-content #sb_booking_content .datetime-step #sb_dateview_container .top-date-select .calendar {
+  padding-top: 18px;
+}
+
+.calendar .weeks-name .name {
+  font-family: var(--hangout-display);
+  color: var(--hangout-muted);
+  letter-spacing: 0.08em;
+}
+
+.calendar .date {
+  border-radius: 50%;
+}
+
+.calendar .day-on {
+  border-radius: 50%;
+  font-weight: 600;
+}
+
+/* Mark today, which the theme does not distinguish at all. */
+.calendar .weeks-date .date.today {
+  box-shadow: inset 0 0 0 2px rgba(194, 46, 104, .45);
+  border-radius: 50%;
+}
+
+/* The calendar's day colours come from rules carrying four id selectors, e.g.
+     #sb-timeline #steps #steps-content #sb_booking_content .datetime-step
+     #sb_dateview_container .top-date-select .calendar .weeks-date .date.selected
+   Copying a ten-level chain that SimplyBook could renumber at any time would be worse than
+   using !important. These four rules and the add-on description above are the only places in
+   this file that use it.
+
+   Selected day: painted #d6ebff, a pale blue that appears nowhere else in the brand.
+   Available day: #464646, identical to a day you cannot book — nothing says which is which.
+   Unavailable day: #81889a at 40% opacity, which computes to about 1.3:1 on white. */
+.calendar .weeks-date .date.selected {
+  background-color: var(--hangout-pink) !important;
+  border-radius: 50% !important;
+}
+
+.calendar .weeks-date .day-on {
+  color: var(--hangout-pink) !important;
+  font-weight: 600;
+}
+
+.calendar .weeks-date .day-off {
+  opacity: 1 !important;
+  color: #6B7280 !important;          /* 4.83:1 on white, was about 1.3:1 */
+}
+
+.calendar .weeks-date .date.selected .day-on {
+  color: #fff !important;
+}
+
+/* Time slots: the live buttons are 111x54 and set in a pale blue that belongs to no other
+   part of the page. Make them brand-coloured, bigger and obviously clickable. */
+.slot .sb-cell {
+  min-height: 56px;
+  min-width: 108px;
+  background: #FBEEF3;
+  border: 1px solid rgba(194, 46, 104, .35);
+  color: var(--hangout-ink);
+  font-size: 17px;
+  transition: background .12s ease, border-color .12s ease;
+}
+
+.slot .sb-cell:hover,
+.slot .sb-cell:focus-visible {
+  background: #F6DDE7;
+  border-color: var(--hangout-pink);
+}
+
+.slot .slot--available-slot {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 400;
+  font-size: 13px;
+  color: var(--hangout-muted);
+}
+
+.time-legend .available .circle {
+  background: #FBEEF3;
+  border: 1px solid rgba(194, 46, 104, .35);
+}
+
+
+/* ========================= 8  Reviews, news, gift cards, gallery, forms ============ */
+
+/* ---- Page headers ----------------------------------------------------------------------
+   The pages that sell (reviews, memberships, gift cards, the gallery) and Contact Us open with a black band
+   carrying the page's name, set large, cut on the same slant as the home page's bands. The
+   live pages have no heading of their own there (Memberships and Gift cards open straight
+   onto their tabs), so the name is drawn in. #sb_main's page class says which page it is;
+   "Purchased plans" and "Your gift cards" share their page's class, and its name. */
+#sb_main.page--reviews #main-content::before,
+#sb_main.page--membership #main-content::before,
+#sb_main.page--gift-card #main-content::before,
+#sb_main.page--gallery #main-content::before,
+#sb_main.page--contact_widget #main-content::before {
+  display: block;
+  padding: clamp(30px, 4vw, 56px) max(20px, calc((100% - 1200px) / 2 + 10px)) calc(clamp(30px, 4vw, 56px) + clamp(24px, 3.4vw, 54px));
+  background-color: var(--hangout-ink);
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - clamp(24px, 3.4vw, 54px)), 0 100%);
+  font-family: var(--hangout-display);
+  font-size: clamp(46px, 6.4vw, 96px);
+  font-weight: 700;
+  line-height: .88;
+  letter-spacing: -0.005em;
+  text-transform: uppercase;
+  color: #FFFFFF;
+}
+
+#sb_main.page--reviews #main-content::before {
+  content: 'What climbers say';
+}
+
+#sb_main.page--membership #main-content::before {
+  content: 'Memberships';
+}
+
+#sb_main.page--gift-card #main-content::before {
+  content: 'Gift cards';
+}
+
+#sb_main.page--gallery #main-content::before {
+  content: 'Gallery';
+}
+
+#sb_main.page--contact_widget #main-content::before {
+  content: 'Contact us';
+}
+
+/* Two plans need no "Filter by attached items" box above them. */
+#sb_membership_filter_container {
+  display: none;
+}
+
+/* The Gallery page's own title would now say it twice; and its photos sit in the same
+   1200px column as every other page, where the theme lets them run to the window's edges. */
+#sb_main.page--gallery #gallery-view .title-main {
+  display: none;
+}
+
+#sb_main.page--gallery #gallery-view > .section-pd {
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 8px 10px 0;
+}
+
+/* ---- Reviews ---------------------------------------------------------------------------
+   79 reviews in one column made a page 25,000px tall. On wide screens: the "Leave a review"
+   form in a narrow column that stays in view, and the reviews beside it as cards in two
+   columns, each the height of what it says. Stars in the brand pink; the name under the words,
+   the way a quote is signed. */
+@media (min-width: 992px) {
+  #reviews-view .page-pd > .container-fluid > .row {
+    display: flex;
+    align-items: flex-start;
+  }
+
+  #reviews-view .page-pd > .container-fluid > .row::before,
+  #reviews-view .page-pd > .container-fluid > .row::after,
+  #reviews-view .page-pd > .container-fluid > .row > .section-divider {
+    display: none;
+  }
+
+  #reviews-view .page-pd > .container-fluid > .row > .col-sm-6:first-child {
+    flex: 0 0 34%;
+    width: 34%;
+    position: sticky;
+    top: 96px;
+  }
+
+  #reviews-view .page-pd > .container-fluid > .row > .col-sm-6:nth-child(2) {
+    flex: 1 1 auto;
+    width: auto;
+  }
+
+  #sb_reviews_list_items_container {
+    column-count: 2;
+    column-gap: 20px;
+  }
+}
+
+/* The theme styles every part of a review from #reviews-view chains, so these repeat it. */
+#reviews-view .review-item {
+  display: flex;
+  flex-direction: column-reverse;
+  margin: 0 0 20px;
+  padding: 24px 26px 22px;
+  break-inside: avoid;
+  text-align: left;
+  background-color: #FFFFFF;
+}
+
+#reviews-view .review-item .avatar,
+#reviews-view .review-item .content {
+  float: none;
+  width: auto;
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+#reviews-view .review-item .avatar .avatar--content {
+  text-align: left;
+}
+
+#reviews-view .review-item .avatar .avatar--content img {
+  display: none;
+}
+
+#reviews-view .review-item .avatar .avatar--content .author p {
+  margin: 14px 0 0;
+  text-align: left;
+  font-family: var(--hangout-display);
+  font-weight: 500;
+  color: var(--hangout-ink);
+}
+
+#reviews-view .review-item .avatar .avatar--content .author p::before {
+  content: '— ';
+  content: '— ' / '';
+  color: var(--hangout-pink);
+}
+
+#reviews-view .review-item .content .review-tab {
+  min-height: 0;
+  margin: 0;
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+
+/* Stars first, on the left, then the title: read top to bottom. */
+#reviews-view .review-item .content .review-tab .stars {
+  float: none;
+  justify-content: flex-start;
+  margin: 0 0 2px;
+}
+
+#reviews-view .review-item .content .review-tab .cap {
+  padding: 10px 0 8px;
+  font-size: 20px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+#reviews-view .review-item .content .review-tab .comment {
+  line-height: 1.6;
+}
+
+/* "Please log in to vote" and a 0 on every card. */
+#reviews-view .review-item .content .review-likes {
+  display: none;
+}
+
+.news-list .article .cap a {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  color: var(--hangout-ink);
+}
+
+.news-list .date {
+  color: var(--hangout-muted);
+}
+
+.promotion-item .promo-label .price-val {
+  font-family: var(--hangout-display);
+  font-weight: 700;
+}
+
+/* The dot beside "Amount:" is hard-coded #5fa1fe, a blue that appears nowhere else. */
+.promotion-list .promotion-item .promo-label.amount::before {
+  background-color: var(--hangout-pink);
+}
+
+#booking-result-tabs .tab-link a {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-size: 15px;
+}
+
+#booking-result-tabs .tab-link.active a {
+  color: var(--hangout-pink);
+  border-bottom: 3px solid var(--hangout-pink);
+}
+
+/* ---- Contact Us ------------------------------------------------------------------------
+   (Ross, 27 Sep 2026: "looks amateur".) The theme centres a 600px box with rounded corners
+   and a soft shadow, centres the intro over it, indents the fields 15px further in than the
+   intro, and repeats every label as a placeholder. Now: a square card like every other card,
+   everything on one left edge, the intro set apart from the form by a rule, the labels once,
+   and one full-width Send message. (Only the contact page uses .sb-widget-form.) */
+#sb_main.page--contact_widget .page-pd {
+  padding: 8px 10px 0;
+}
+
+.sb-widget-form {
+  max-width: 640px;
+  margin: 0 auto;
+  padding: 34px 40px 38px;
+  border-radius: 0;
+  box-shadow: none;
+}
+
+.sb-widget-form .form-fields {
+  max-width: none;
+  margin: 0;
+  padding: 0;
+}
+
+.sb-widget-form .form-group {
+  margin: 0 0 18px;
+}
+
+.sb-widget-form .form-fields .form-group .control-label {
+  margin-bottom: 6px;
+  padding-top: 0;
+  font-size: 15px;
+  font-weight: 600;
+  text-align: left;
+}
+
+.sb-widget-form .form-group > .col-sm-12,
+.sb-widget-form .row > .col-sm-12 {
+  padding-left: 0;
+  padding-right: 0;
+}
+
+.sb-widget-form .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+.sb-widget-form .form-control {
+  height: 48px;
+  border-radius: 0;
+}
+
+.sb-widget-form .form-fields textarea.form-control {
+  height: auto;
+  min-height: 150px;
+  padding: 10px;
+  border-color: #E5E5E5;
+  resize: vertical;
+}
+
+.sb-widget-form .form-control::placeholder {
+  color: transparent;
+}
+
+@media (max-width: 767px) {
+  .sb-widget-form {
+    padding: 26px 20px 28px;
+  }
+}
+
+.sb-widget-form .buttons {
+  margin-top: 26px;
+  padding-top: 0;
+  text-align: left;
+}
+
+.sb-widget-form .buttons .send-message-button {
+  display: block;
+  width: 100%;
+  min-height: 50px;
+  margin: 0;
+}
+
+/* The contact page's intro line carries the phone number and email (Ross, 23 Sep 2026), so it
+   reads as a sentence, not a heading: left-aligned, with a rule under it before the form. */
+.sb-widget-form .title {
+  font-family: 'Noto Sans', sans-serif;
+  font-weight: 400;
+  font-size: 17px;
+  line-height: 1.6;
+  letter-spacing: 0;
+  text-align: left;
+  margin-bottom: 26px;
+  padding-bottom: 24px;
+  border-bottom: 1px solid #E6E3E6;
+}
+
+.sb-widget-form .control-label,
+.custom-form .control-label {
+  font-weight: 600;
+  color: var(--hangout-ink);
+}
+
+/* The terms and cancellation-policy links in the sign-up form fall back to Bootstrap's
+   default blue. */
+#sb_user_terms_link,
+#sb_cancellation_terms_link {
+  color: var(--hangout-pink);
+  text-decoration: underline;
+}
+
+.form-control:focus {
+  border-color: var(--hangout-pink);
+  box-shadow: 0 0 0 3px rgba(194, 46, 104, .18);
+}
+
+/* Sign in / sign up (the booking's Client step, and the sign-in page). The theme spaces it
+   for a page of its own: 40px under the title, 25px above and below each column heading,
+   and every label padded like a button, so the Sign up button sat 1,000px down. Tighter,
+   and the four sign-up fields in two columns on wide screens, so the step fits on a laptop
+   screen. */
+/* The sign-in page carries 40px of padding above the card, on top of the step bar's gap. */
+.page-pd:has(> #client-login) {
+  padding-top: 6px;
+}
+
+#client-login .tab-pd {
+  padding: 18px 30px 24px;
+}
+
+#client-login .title-main {
+  padding-bottom: 10px;
+}
+
+/* Google and Facebook: icon beside the name, not above it, so the bar is one line high. */
+#client-login .client-login-bar .btn-bar__social-links .btn--action {
+  flex-direction: row;
+  gap: 6px;
+}
+
+#client-login .client-login-bar .btn-bar__social-links .btn--action .icon {
+  width: 30px;
+  height: 30px;
+}
+
+#client-login .custom-form #sb_terms_and_conditions,
+#client-login .custom-form .remember-me .control-label {
+  font-size: 14px;
+}
+
+#client-login .client-login-bar {
+  margin-top: 0;
+  margin-bottom: 6px;
+  padding-top: 8px;
+  padding-bottom: 8px;
+}
+
+#client-login .custom-form .cap {
+  padding: 14px 0 6px;
+}
+
+#client-login .custom-form .form-horizontal .control-label {
+  padding-top: 6px;
+  padding-bottom: 5px;
+}
+
+#client-login .custom-form .form-horizontal .form-group {
+  margin-bottom: 4px;
+}
+
+/* The rule between the fields and the tick boxes had 55px of space round it. */
+#client-login #sb_sign_up_form .sb-client-fields {
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+}
+
+#client-login .custom-form .button-wrapper .btn {
+  margin-top: 12px;
+}
+
+@media (min-width: 992px) {
+  #client-login #sb_sign_up_form .sb-built-in-fields {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    column-gap: 16px;
+  }
+
+  #client-login #sb_sign_up_form .sb-built-in-fields .form-group {
+    margin-left: 0;
+    margin-right: 0;
+  }
+}
+
+.license--content {
+  line-height: 1.65;
+  max-width: 76ch;
+}
+
+/* Gallery (home module and the Gallery page share #gallery-view). The theme floats five
+   squares per row, so eight photos land as five and three. Instead: a grid of four across
+   that arranges itself by how many photos there are, so the last row is never ragged.
+     4, 8, 12…  plain rows of four
+     5, 9…      the first photo is a big tile, two across and two down
+     6, 10…     the first and fourth photos are tall tiles, two down
+     7, 11…     the first photo is a tall tile
+     1–3        they share one row
+   Photos are uploaded in their own shape; every tile crops to fit (object-fit: cover), so
+   portrait and square photos sit in tall tiles as happily as landscape ones in short tiles.
+   The counting uses :first-child:nth-last-child(), plain CSS that needs no script.
+   Twelve grid columns so that one, two, three and four across are all whole spans. */
+#gallery-view .img-list {
+  display: grid;
+  grid-template-columns: repeat(12, minmax(0, 1fr));
+  gap: 10px;
+  margin: 0;
+}
+
+/* the home module wraps the list in a .row, whose negative margins the old tile padding hid */
+#gallery-view > .row {
+  margin-left: 0;
+  margin-right: 0;
+}
+
+#gallery-view .img-list::before,
+#gallery-view .img-list::after {
+  display: none;                            /* clearfix pseudo-elements would take grid cells */
+}
+
+#gallery-view .img-list li {
+  grid-column: span 3;
+  aspect-ratio: 4 / 3;
+  width: auto;
+  float: none;
+  padding: 0;
+  margin: 0;
+}
+
+#gallery-view li a {
+  height: 100%;
+  padding-top: 0;                           /* the theme's square-making padding; the li sets the shape now */
+  border-radius: 0;
+}
+
+#gallery-view li a .img-item {
+  height: 100%;
+  border-radius: 0;
+  transition: transform .3s ease;
+}
+
+#gallery-view li a:hover .img-item {
+  transform: scale(1.04);
+}
+
+/* Big and tall tiles have no shape of their own: they stretch to the rows they span. */
+@media (min-width: 768px) {
+  #gallery-view .img-list li:first-child:nth-last-child(4n+5) {
+    grid-column: span 6;
+    grid-row: span 2;
+    aspect-ratio: auto;
+  }
+
+  #gallery-view .img-list li:first-child:nth-last-child(4n+6),
+  #gallery-view .img-list li:first-child:nth-last-child(4n+6) ~ li:nth-child(4),
+  #gallery-view .img-list li:first-child:nth-last-child(4n+7) {
+    grid-row: span 2;
+    aspect-ratio: auto;
+  }
+
+  #gallery-view .img-list li:first-child:nth-last-child(3),
+  #gallery-view .img-list li:first-child:nth-last-child(3) ~ li {
+    grid-column: span 4;
+  }
+
+  #gallery-view .img-list li:first-child:nth-last-child(2),
+  #gallery-view .img-list li:first-child:nth-last-child(2) ~ li {
+    grid-column: span 6;
+  }
+}
+
+/* Phones: two across. With an odd count the first photo runs full width, so the last row is
+   still full. */
+@media (max-width: 767px) {
+  #gallery-view .img-list {
+    gap: 6px;
+  }
+
+  #gallery-view .img-list li {
+    grid-column: span 6;
+  }
+
+  #gallery-view .img-list li:first-child:nth-last-child(odd) {
+    grid-column: span 12;
+    aspect-ratio: 2 / 1;
+  }
+}
+
+#gallery-view .img-list li:only-child {
+  grid-column: span 12;
+  aspect-ratio: 21 / 9;
+}
+
+
+/* =========================================== 9  Footer and floating chrome ========= */
+
+/* The footer is the last black band. On the home page it carries on from the map; on every
+   other page it rises from the light page on the same slant as the bands above, drawn by a
+   pseudo-element rather than a clip-path on the footer itself, because the back-to-top
+   button and the cookie bar live inside the footer and a clip-path would cut them off.
+   Under the two links, the logo again, big and centred (Ross, 27 Sep 2026: it was the name in
+   outline type, as wide as the page): a sign-off, not information, so it is a background
+   image that screen readers skip. The image is the logo itself (assets/logo/hangout-logo.svg,
+   the file uploaded as the header logo), written into this file as a data URL so the footer
+   needs no upload of its own; if the logo ever changes, paste it in again. */
+#footer {
+  position: relative;
+  margin-top: 0;
+  padding: 44px 0 0;
+  overflow: hidden;
+  background-color: var(--hangout-ink);
+}
+
+#sb_main:not(.page--index) #footer {
+  margin-top: calc(clamp(36px, 5vw, 80px) + 56px);
+  overflow: visible;
+}
+
+#sb_main:not(.page--index) #footer::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 100%;
+  height: clamp(36px, 5vw, 80px);
+  background-color: var(--hangout-ink);
+  clip-path: polygon(0 100%, 100% 0, 100% 100%);
+  pointer-events: none;
+}
+
+#footer > .container-fluid {
+  overflow: hidden;
+}
+
+#footer > .container-fluid::after {
+  content: '';
+  display: block;
+  width: clamp(150px, 20vw, 240px);
+  aspect-ratio: 1;
+  margin: 32px auto 44px;
+  background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='5 8 864 864'%3E%3Ccircle cx='437' cy='440' r='432' fill='%23D83A7A'/%3E%3Cpolygon fill='%23141214' points='210,160 346,163 346,284'/%3E%3Cpolygon fill='%23141214' points='200,200 334,368 196,668'/%3E%3Cpolygon fill='%23141214' points='338,384 447,492 341,492 337,720 232,720'/%3E%3Cpolygon fill='%23141214' points='510,176 680,178 680,606 447,396 510,396'/%3E%3Cpolygon fill='%23141214' points='500,590 500,725 612,725'/%3E%3Cg fill='%23D83A7A'%3E%3Cg transform='translate(548 350) rotate(-90) scale(0.07457 -0.06173) translate(-751.0 -405.0)'%3E%3Cpath transform='translate(0 0)' d='M133 0V677H11V810H434V677H313V0Z'/%3E%3Cpath transform='translate(445 0)' d='M63 0V810H242V482H368V810H547V0H368V354H242V0Z'/%3E%3Cpath transform='translate(1055 0)' d='M60 0V810H424V688H239V487H380V363H239V121H426V0Z'/%3E%3C/g%3E%3C/g%3E%3Cg fill='%23D83A7A'%3E%3Cg transform='translate(617 350) rotate(-90) scale(0.07851 -0.07901) translate(-1961.5 -405.0)'%3E%3Cpath transform='translate(0 0)' d='M63 0V810H242V482H368V810H547V0H368V354H242V0Z'/%3E%3Cpath transform='translate(610 0)' d='M21 0 174 810H378L529 0H364L337 171H218L190 0ZM234 278H320L277 594Z'/%3E%3Cpath transform='translate(1161 0)' d='M60 0V810H186L352 420V810H500V0H379L213 420V0Z'/%3E%3Cpath transform='translate(1722 0)' d='M271 -12Q187 -12 138.5 23.0Q90 58 69.5 121.5Q49 185 49 268V540Q49 626 71.0 689.0Q93 752 146.5 786.5Q200 821 292 821Q382 821 433.5 791.0Q485 761 507.0 708.0Q529 655 529 584V532H354V598Q354 624 350.5 646.0Q347 668 334.5 681.5Q322 695 294 695Q265 695 252.0 679.5Q239 664 235.5 641.0Q232 618 232 593V218Q232 191 237.5 167.5Q243 144 257.5 129.5Q272 115 299 115Q327 115 342.0 130.0Q357 145 363.0 169.0Q369 193 369 220V315H296V420H530V0H412L402 67Q386 33 355.0 10.5Q324 -12 271 -12Z'/%3E%3Cpath transform='translate(2304 0)' d='M292 -12Q201 -12 148.0 20.0Q95 52 72.0 112.0Q49 172 49 255V556Q49 640 72.0 699.0Q95 758 148.0 789.5Q201 821 292 821Q384 821 437.5 789.5Q491 758 514.0 699.0Q537 640 537 556V255Q537 172 514.0 112.0Q491 52 437.5 20.0Q384 -12 292 -12ZM292 115Q320 115 333.0 129.0Q346 143 350.0 165.0Q354 187 354 210V600Q354 624 350.0 645.5Q346 667 333.0 681.0Q320 695 292 695Q266 695 253.0 681.0Q240 667 236.0 645.5Q232 624 232 600V210Q232 187 235.5 165.0Q239 143 251.5 129.0Q264 115 292 115Z'/%3E%3Cpath transform='translate(2890 0)' d='M294 -12Q201 -12 148.5 18.5Q96 49 75.0 107.5Q54 166 54 251V810H231V224Q231 199 235.0 174.0Q239 149 252.5 133.0Q266 117 294 117Q323 117 336.0 133.0Q349 149 352.5 174.0Q356 199 356 224V810H534V251Q534 166 512.5 107.5Q491 49 439.0 18.5Q387 -12 294 -12Z'/%3E%3Cpath transform='translate(3478 0)' d='M133 0V677H11V810H434V677H313V0Z'/%3E%3C/g%3E%3C/g%3E%3Cg fill='%23141214'%3E%3Cg transform='translate(720 350) rotate(-90) scale(0.08533 -0.07407) translate(-2021.5 -405.0)'%3E%3Cpath transform='translate(0 0)' d='M292 -12Q200 -12 146.5 21.5Q93 55 71.0 115.5Q49 176 49 258V550Q49 634 71.0 694.5Q93 755 146.5 788.0Q200 821 292 821Q382 821 432.5 791.5Q483 762 504.0 709.0Q525 656 525 587V517H350V598Q350 622 347.5 644.0Q345 666 333.0 680.5Q321 695 292 695Q264 695 250.5 680.0Q237 665 233.5 642.5Q230 620 230 595V214Q230 187 234.5 164.5Q239 142 252.5 128.5Q266 115 292 115Q320 115 332.0 129.5Q344 144 347.0 167.0Q350 190 350 214V299H525V229Q525 160 504.5 105.5Q484 51 433.5 19.5Q383 -12 292 -12Z'/%3E%3Cpath transform='translate(563 0)' d='M60 0V810H239V121H425V0Z'/%3E%3Cpath transform='translate(1006 0)' d='M61 0V810H240V0Z'/%3E%3Cpath transform='translate(1307 0)' d='M57 0 71 810H263L352 339L448 810H633L647 0H520L505 539L411 0H298L198 543L186 0Z'/%3E%3Cpath transform='translate(2011 0)' d='M60 0V810H271Q323 810 369.5 802.0Q416 794 452.0 771.5Q488 749 508.5 707.5Q529 666 529 598Q529 549 514.5 515.5Q500 482 473.5 462.0Q447 442 410 435Q457 429 489.0 404.5Q521 380 537.5 339.0Q554 298 554 240Q554 177 537.5 131.5Q521 86 490.0 57.0Q459 28 413.5 14.0Q368 0 309 0ZM239 125H277Q336 125 358.5 155.0Q381 185 381 243Q381 289 371.0 316.0Q361 343 338.0 355.5Q315 368 276 368H239ZM239 486H274Q315 486 336.0 498.5Q357 511 364.5 535.0Q372 559 372 593Q372 625 360.5 646.5Q349 668 326.5 679.0Q304 690 270 690H239Z'/%3E%3Cpath transform='translate(2599 0)' d='M61 0V810H240V0Z'/%3E%3Cpath transform='translate(2900 0)' d='M60 0V810H186L352 420V810H500V0H379L213 420V0Z'/%3E%3Cpath transform='translate(3461 0)' d='M271 -12Q187 -12 138.5 23.0Q90 58 69.5 121.5Q49 185 49 268V540Q49 626 71.0 689.0Q93 752 146.5 786.5Q200 821 292 821Q382 821 433.5 791.0Q485 761 507.0 708.0Q529 655 529 584V532H354V598Q354 624 350.5 646.0Q347 668 334.5 681.5Q322 695 294 695Q265 695 252.0 679.5Q239 664 235.5 641.0Q232 618 232 593V218Q232 191 237.5 167.5Q243 144 257.5 129.5Q272 115 299 115Q327 115 342.0 130.0Q357 145 363.0 169.0Q369 193 369 220V315H296V420H530V0H412L402 67Q386 33 355.0 10.5Q324 -12 271 -12Z'/%3E%3C/g%3E%3C/g%3E%3Cg fill='%23141214'%3E%3Cg transform='translate(797 350) rotate(-90) scale(0.08994 -0.07901) translate(-889.5 -405.0)'%3E%3Cpath transform='translate(0 0)' d='M271 -12Q187 -12 138.5 23.0Q90 58 69.5 121.5Q49 185 49 268V540Q49 626 71.0 689.0Q93 752 146.5 786.5Q200 821 292 821Q382 821 433.5 791.0Q485 761 507.0 708.0Q529 655 529 584V532H354V598Q354 624 350.5 646.0Q347 668 334.5 681.5Q322 695 294 695Q265 695 252.0 679.5Q239 664 235.5 641.0Q232 618 232 593V218Q232 191 237.5 167.5Q243 144 257.5 129.5Q272 115 299 115Q327 115 342.0 130.0Q357 145 363.0 169.0Q369 193 369 220V315H296V420H530V0H412L402 67Q386 33 355.0 10.5Q324 -12 271 -12Z'/%3E%3Cpath transform='translate(582 0)' d='M162 0V331L8 810H177L254 554L323 810H485L334 331V0Z'/%3E%3Cpath transform='translate(1075 0)' d='M57 0 71 810H263L352 339L448 810H633L647 0H520L505 539L411 0H298L198 543L186 0Z'/%3E%3C/g%3E%3C/g%3E%3C/svg%3E") center / contain no-repeat;
+  transform: translateY(var(--hangout-sign, 0%));    /* motion.js lifts it as you arrive */
+  pointer-events: none;
+}
+
+#footer .text-center {
+  padding: 4px 0;
+}
+
+#footer .text-center a,
+#sb_gdpr_show_form_btn {
+  color: #fff;
+  font-size: 14px;
+  letter-spacing: 0.02em;
+  text-decoration: underline;
+  text-decoration-color: rgba(255, 255, 255, .35);
+  text-underline-offset: 4px;
+}
+
+#footer .text-center a:hover,
+#sb_gdpr_show_form_btn:hover {
+  text-decoration-color: var(--hangout-pink-lit);
+}
+
+/* "My personal data" opens a small form (gdpr_report_module). The theme floats it above the
+   link, where the footer's overflow: hidden (it keeps the rising logo inside the band) cuts
+   it off completely, so it opens in place instead: a white card under the link, square like
+   every other card, and the footer grows to hold it. */
+#sb_gdpr_report_module_container #sb_gdpr_email_form {
+  position: relative;
+  bottom: auto;
+  margin: 12px auto 8px;
+  border: 0;
+  border-radius: 0;
+  text-align: left;
+}
+
+#sb_gdpr_report_module_container #sb_gdpr_email_form::after {
+  display: none;
+}
+
+#sb_gdpr_report_module_container #sb_gdpr_email_form .title {
+  font-family: var(--hangout-display);
+  font-size: 20px;
+  color: var(--hangout-ink);
+}
+
+#sb_gdpr_report_module_container #sb_gdpr_email_form .content .form-container .btn {
+  font-size: 15px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+#sb_gdpr_report_module_container #sb_gdpr_email_form .content .form-container .help-block {
+  font-size: 13px;                    /* the theme's 10px is too small to read */
+}
+
+/* The floating Google reviews badge is switched off in settings (Ross, 23 Sep 2026). This
+   keeps it hidden if the feature is ever switched back on. */
+#sb_google_reviews_module {
+  display: none;
+}
+
+/* The Instagram gallery has no images, so the section renders as a lone heading.
+   Disabling the feature in settings is the real fix (settings-checklist.md); this is here
+   so the page never shows an empty block if the feature is ever switched back on with no
+   images behind it. */
+#social-gallery-view:not(:has(li)) {
+  display: none;
+}
+
+
+/* ================================================== 10  Accessibility ============== */
+
+/* The theme has no visible focus style on most controls. Keyboard users get nothing. */
+a:focus-visible,
+button:focus-visible,
+input:focus-visible,
+textarea:focus-visible,
+select:focus-visible,
+[role="button"]:focus-visible,
+[tabindex]:focus-visible {
+  outline: 3px solid var(--hangout-pink);
+  outline-offset: 2px;
+  border-radius: 2px;
+}
+
+.service-item .btn.select a:focus-visible,
+.membership-item .active-container a.btn:focus-visible,
+.promotion-item .btn.select:focus-visible,
+button.sb-next:focus-visible,
+#main-buttons .btn a:focus-visible {
+  outline: 3px solid #fff;
+  outline-offset: -5px;
+  box-shadow: 0 0 0 3px var(--hangout-pink);
+}
+
+
+/* Bigger tap targets on the controls that are currently smaller than 44px.
+   The quantity arrows are absolutely positioned, stacked, 18x23 each. Widen them and let them
+   split the control's height, so the pair still stacks cleanly however tall the box gets —
+   giving each a fixed min-height instead would make them overlap. */
+.plugin-group-booking .plus,
+.plugin-group-booking .minus {
+  width: 30px;
+  height: 50%;
+}
+
+.plugin-group-booking .plus {
+  top: 0;
+  bottom: auto;
+}
+
+.plugin-group-booking .minus {
+  top: 50%;
+  bottom: 0;
+}
+
+.attributes-checkbox .product-label {
+  min-width: 26px;
+  min-height: 26px;
+}
+
+.read-more {
+  padding: 2px 0;
+}
+
+
+/* ====================================================== 11  Mobile ================= */
+
+@media (max-width: 1024px) {
+  #header .brand.company-logo-and-name .logo a img {
+    height: 48px;
+    max-height: 48px;
+  }
+}
+
+@media (max-width: 767px) {
+  /* One row: logo, basket, account, menu. The theme lets the row wrap. */
+  #header .row {
+    flex-wrap: nowrap;
+    align-items: center;
+  }
+
+  #header .brand.company-logo-and-name .logo a img {
+    height: 44px;
+    max-height: 44px;
+  }
+
+  #header .nav-trigger {
+    width: 44px;
+    min-width: 44px;
+    height: 44px;
+    align-self: center;
+  }
+
+  #header .nav-trigger .fa {
+    line-height: 44px;
+    font-size: 22px;
+  }
+
+  #sb_membership_module .membership-item .tab .excerpt-info,
+  #membership-view #sb_membership_list_container .membership-item .tab .excerpt-info {
+    min-height: 400px;
+  }
+
+  #sb_membership_module .membership-item .tab .excerpt-info > .tab-pd,
+  #membership-view #sb_membership_list_container .membership-item .tab .excerpt-info > .tab-pd {
+    padding: 26px 22px 24px;
+  }
+
+  #sb_membership_module .membership-item .tab .cap.short,
+  #membership-view #sb_membership_list_container .membership-item .tab .cap.short {
+    font-size: 32px;
+  }
+
+  /* The two banner buttons stack, full width, Book now on top. */
+  #main-buttons .wrapper .inner .bar {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  #main-buttons .btn {
+    display: block;
+    width: 100%;
+  }
+
+  #main-buttons .btn a {
+    width: 100%;
+  }
+
+  /* "Membership required" sits in the price slot and is far wider than "£6.00". At 22px it
+     pushes past the edge of a phone-width card. */
+  .bar-service {
+    flex-wrap: wrap;
+  }
+
+  .badge.price {
+    font-size: 17px;
+  }
+
+  .title-main,
+  .container-caption {
+    font-size: 20px;
+  }
+
+  #schedule .section-pd,
+  #about-us .section-pd,
+  #contacts .section-pd {
+    padding: 20px 18px 22px;
+  }
+
+  /* Taller quantity control, so each arrow is a ~28px tap target. */
+  .plugin-group-booking .active-count {
+    min-height: 56px;
+  }
+
+  /* Time slots as a proper grid rather than a wrapped row of narrow buttons: three to a row,
+     so a day's three start times (17:00, 18:30, 20:00) sit on one line (Ross, 27 Sep 2026). */
+  #sb_time_slots_container {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 8px;
+  }
+
+  #sb_time_slots_container .slot {
+    width: 100%;
+    margin: 0;
+  }
+
+  .slot .sb-cell {
+    width: 100%;
+    min-width: 0;
+    min-height: 60px;
+  }
+
+  /* Read more (and every other pop-up) opens in the middle of the screen, not at the top
+     (Ross, 27 Sep 2026). The dialog fills the screen's height and centres its card in it; a
+     card taller than the screen starts at the top and scrolls, as before. Taps on the empty
+     space around the card still reach the backdrop and close it. */
+  .modal .modal-dialog {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    min-height: calc(100% - 20px);
+    pointer-events: none;
+  }
+
+  .modal .modal-dialog > * {
+    pointer-events: auto;
+  }
+
+  .paid-attribute-footer {
+    position: sticky;
+    bottom: 0;
+    z-index: 5;
+  }
+
+  /* The Google reviews badge covers the bottom-right corner, including the back-to-top
+     button and the last card's Select button. */
+  .google-reviews__card {
+    transform: scale(.82);
+    transform-origin: bottom right;
+  }
+}
+
+
+/* Invoices list on a phone: seven columns, and the theme lets the table scroll sideways, so
+   Total, Status and the Confirm / View link sat off-screen with nothing to say they were
+   there. Below 600px the two columns a client needs least are hidden (Payment processor is
+   always Stripe; Payment received says what Status says) and the cells may wrap, so the
+   rest fits. */
+@media (max-width: 599px) {
+  .table-responsive > .invoice-table.v1 > thead > tr > th:nth-child(3),
+  .table-responsive > .invoice-table.v1 > thead > tr > th:nth-child(5),
+  .table-responsive > .invoice-table.v1 > tbody > tr > td:nth-child(3),
+  .table-responsive > .invoice-table.v1 > tbody > tr > td:nth-child(5) {
+    display: none;
+  }
+
+  .table-responsive > .invoice-table.v1 > thead > tr > th,
+  .table-responsive > .invoice-table.v1 > tbody > tr > td {
+    white-space: normal;
+  }
+}
+
+
+/* ========================================= 12  Account, payment and the waiver field ===== */
+/* Revised 24 Sep 2026. The Client step's details form (with the waiver), the payment page,
+   My bookings, Purchased plans and the user menu were never rendered during the capture —
+   they need an account or a payment. Their markup is in the capture all the same, as the
+   live site's own page templates (<script type="text/html"> blocks), and
+   tools/audit-selectors.js checks these selectors against those. What SimplyBook actually
+   renders from them is still to be seen: launch-checklist.md step 12. */
+
+/* The waiver link in the booking form's intake field would otherwise be Bootstrap blue. */
+.form-group__static-html a {
+  color: var(--hangout-pink);
+  text-decoration: underline;
+}
+
+/* ---- Confirm details (the Client step, signed in) -----------------------------------
+   Ross, 24 Sep 2026: "it feels messy". Three things matter here: what you are booking and
+   what it costs, the waiver tick, and the Confirm button. So:
+   - who: name, email and phone, already filled from the account and read-only, become a
+     compact grey box of label and value rather than three input boxes with red asterisks
+     (only when SimplyBook marks them read-only; editable fields stay fields);
+   - the waiver: its text and tick box together in one pink panel, box first and larger;
+   - what: the booking summary in a panel of its own, no Provider row (there is one), the
+     add-ons shown rather than behind a toggle, the total on its own ruled line, and Confirm
+     booking full width beneath it.
+   The theme's own rules here carry five ids, hence the long chain. */
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .section-divider {
+  display: none;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .title-main {
+  padding-bottom: 16px;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container {
+  margin-bottom: 16px;
+  padding: 10px 16px;
+  border-radius: 0;
+  background: #F6F4F6;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container .form-group {
+  display: flex;
+  align-items: center;
+  margin: 0;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container .form-group > [class*=col-] {
+  float: none;
+  padding: 0;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container .form-group > .control-label {
+  flex: 0 0 76px;
+  width: 76px;
+  padding: 0;
+  font-size: 14px;
+  font-weight: 400;
+  line-height: 30px;
+  color: var(--hangout-muted);
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container .form-group > .col-sm-8 {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container .form-group:has(.form-control[readonly]) .control-label.required::after,
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container .form-group:has(.form-control[readonly]) .control-label.required + div[class*=col-]::before {
+  display: none;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_client_info_container .form-control[readonly] {
+  height: 30px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  box-shadow: none;
+  font-weight: 600;
+  color: var(--hangout-ink);
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_membership_container .form-group {
+  margin-bottom: 16px;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_additional_fields {
+  padding: 16px 18px;
+  border: 1px solid rgba(194, 46, 104, .28);
+  border-radius: 0;
+  background: #FBEEF3;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_additional_fields .form-group {
+  margin: 0;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_additional_fields .form-group__static-html .col-sm-12 {
+  padding: 0;
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_additional_fields .form-group--checkbox {
+  display: flex;
+  flex-direction: row-reverse;          /* the box first, then what ticking it means */
+  justify-content: flex-end;
+  align-items: center;
+  gap: 12px;
+  margin-top: 14px;
+  padding-top: 14px;
+  border-top: 1px solid rgba(194, 46, 104, .2);
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_additional_fields .form-group--checkbox .control-label {
+  flex: 0 1 auto;
+  display: block;                       /* the theme's flex put the asterisk at the far edge */
+  width: auto;
+  padding: 0;
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.35;
+  color: var(--hangout-ink);
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_additional_fields .form-group--checkbox .custom-checkbox {
+  flex: 0 0 auto;
+  margin: 0;
+  transform: scale(1.25);
+}
+
+/* Ticked: the panel settles to white with a solid edge. */
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side #sb_additional_fields:has(.form-group--checkbox input:checked) {
+  border-color: var(--hangout-pink);
+  background: #FFFFFF;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side .confirm-details {
+  padding: 20px 24px 24px;
+  border-radius: 0;
+  background: #F6F4F6;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side #sb_booking_info .booking-info--item_provider {
+  display: none;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side #sb_booking_info .full-info-price--wrapper {
+  margin-top: 4px;
+  padding-top: 14px;
+  border-top: 1px solid #E6E3E6;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side #sb_booking_info .full-info-price--caption {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side #sb_booking_info .full-info-price--value {
+  font-size: 24px;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side .buttons-container .sb-book-btn-container {
+  width: 100%;
+  margin-top: 16px;
+}
+
+#sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side .buttons-container .sb-book-btn-container #sb_book_btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 48px;
+  margin: 0;
+}
+
+@media (max-width: 767px) {
+  #sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .left-side {
+    margin-bottom: 20px;
+  }
+
+  #sb-timeline #steps #steps-content #sb_booking_content #details .detail-step .right-side .confirm-details {
+    padding: 16px;
+  }
+}
+
+/* The date tile on each booking card is theme blue; bring it into the palette. */
+.booking-calendar .calendar .header {
+  background-color: var(--hangout-pink);
+  color: #FFFFFF;
+}
+
+/* ---- My bookings: the booking cards --------------------------------------------------
+   The theme's card changes shape as it is used: "Additional fields" and "Additional items"
+   are accordions that grow the card when opened, and the date wraps beside the calendar
+   tile. What they hide is short (the waiver answer, places and add-ons), so show both
+   always, as two labelled sections: nothing expands and every card keeps its size. The
+   toggles stay in the markup; they are just inert. Two cards a row (the theme's own grid),
+   equal heights, buttons along the foot. The same summary sits beside Confirm details
+   (#sb_booking_info), so the section and table rules cover it too. */
+.booking-item .tab {
+  border-radius: 0;
+  box-shadow: 0 1px 2px rgba(20, 18, 20, .06), 0 8px 24px rgba(20, 18, 20, .06);
+}
+
+.booking-item.highlighted .tab {
+  box-shadow: 0 0 0 2px var(--hangout-pink), 0 8px 24px rgba(20, 18, 20, .08);
+}
+
+.booking-item .current-booking-info .cap {
+  font-family: var(--hangout-display);
+  font-size: 22px;
+  font-weight: 600;
+  line-height: 1.2;
+  color: var(--hangout-ink);
+}
+
+.booking-item .current-booking-info .booking-info .booking-overview {
+  flex: 1 1 auto;
+  min-width: 0;
+}
+
+.booking-item .current-booking-info .booking-info .booking-calendar {
+  flex: 0 0 76px;
+  margin-left: 16px;
+}
+
+.booking-item .current-booking-info .calendar .header {
+  font-family: var(--hangout-display);
+  font-size: 16px;
+  letter-spacing: 0.08em;
+  line-height: 28px;
+}
+
+.booking-item .current-booking-info .calendar .body {
+  font-family: var(--hangout-display);
+  font-size: 30px;
+}
+
+.booking-item .current-booking-info table,
+#sb_booking_info .current-booking-info table {
+  font-size: 15px;
+}
+
+.booking-item .current-booking-info table td,
+#sb_booking_info .current-booking-info table td {
+  padding-bottom: 8px;
+}
+
+.booking-item .current-booking-info .label,
+#sb_booking_info .current-booking-info .label {
+  width: 110px;
+  color: var(--hangout-muted);
+}
+
+.booking-item .current-booking-info .info,
+#sb_booking_info .current-booking-info .info {
+  color: var(--hangout-ink);
+}
+
+.booking-item .current-booking-info .date-line--caption {
+  white-space: nowrap;
+}
+
+.booking-item .current-booking-info .accordion,
+#sb_booking_info .current-booking-info .accordion {
+  margin: 0;
+  padding: 14px 0 4px;
+  border: 0;
+  border-top: 1px solid #E6E3E6;
+}
+
+.booking-item .current-booking-info .accordion .title,
+#sb_booking_info .current-booking-info .accordion .title {
+  padding: 0 0 8px;
+  pointer-events: none;
+  cursor: default;
+  font-family: var(--hangout-display);
+  font-size: 13px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--hangout-muted);
+}
+
+.booking-item .current-booking-info .accordion .title::after,
+#sb_booking_info .current-booking-info .accordion .title::after {
+  display: none;
+}
+
+.booking-item .current-booking-info .accordion .title + div,
+#sb_booking_info .current-booking-info .accordion .title + div {
+  padding: 0;
+}
+
+/* Bootstrap's own classes for a closed and a closing panel; !important beats the inline
+   height it sets while animating, so a keyboard toggle can't collapse it either. */
+.booking-item .current-booking-info .accordion .collapse,
+.booking-item .current-booking-info .accordion .collapsing,
+#sb_booking_info .current-booking-info .accordion .collapse,
+#sb_booking_info .current-booking-info .accordion .collapsing {
+  display: block !important;
+  height: auto !important;
+}
+
+.booking-item .current-booking-info .accordion p,
+#sb_booking_info .current-booking-info .accordion p {
+  margin: 0 0 6px;
+  font-size: 15px;
+}
+
+.booking-item .current-booking-info .booking-btns {
+  padding: 16px 0 0;
+  border-top: 1px solid #E6E3E6;
+}
+
+.booking-item .current-booking-info .booking-btns .col-sm-12 {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+/* Equal widths, one row when they fit (they wrap on a phone). The theme's icons go: three
+   different glyphs beside three short labels only add noise. */
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn {
+  flex: 1 1 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 44px;
+  margin: 0;
+  padding: 0 12px;
+  font-size: 14px;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn::after {
+  display: none;
+}
+
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb-book {
+  padding: 0;
+}
+
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb-book a {
+  flex: 1;
+  align-self: stretch;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 12px;
+  font: inherit;
+  letter-spacing: inherit;
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Cancel and Add to calendar step back as outlines, so Book again is the one solid button.
+   The theme fills them red (#a64c4c) and slate blue. */
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb_cancel_btn,
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb_add_to_cal {
+  background: #FFFFFF;
+  box-shadow: inset 0 0 0 1px #CFCACF;
+  color: var(--hangout-ink);
+}
+
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb_cancel_btn {
+  color: #A64C4C;                            /* 5.59:1 on white */
+}
+
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb_cancel_btn:hover,
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb_cancel_btn:focus-visible {
+  background: #A64C4C;
+  box-shadow: none;
+  color: #FFFFFF;
+}
+
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb_add_to_cal:hover,
+.booking-item .current-booking-info .booking-btns .col-sm-12 > .btn.sb_add_to_cal:focus-visible {
+  box-shadow: inset 0 0 0 1px var(--hangout-ink);
+}
+
+/* Close buttons in modal footers (Add to calendar, among others) are the theme's green. */
+.modal-dialog .modal-content .modal-footer .btn.btn-default {
+  background: #FFFFFF;
+  border: 0;
+  box-shadow: inset 0 0 0 1px #CFCACF;
+  color: var(--hangout-ink);
+}
+
+/* A cancelled booking (All bookings) reads as done: status in red, date tile greyed. */
+.booking-item.booking-cancelled .booking-info--item_status .info {
+  color: #A64C4C;
+}
+
+.booking-item.booking-cancelled .calendar {
+  filter: grayscale(1);
+  opacity: .55;
+}
+
+/* "My profile" in the user menu is Bootstrap's blue btn-primary. */
+.is-logged .btn-primary {
+  background-color: var(--hangout-pink);
+  border-color: var(--hangout-pink);
+  color: #FFFFFF;
+}
+
+.is-logged .btn-primary:hover,
+.is-logged .btn-primary:focus {
+  background-color: #A52758;          /* SimplyBook's own hover shade of the button colour */
+  border-color: #A52758;
+}
+
+/* "Cancel recurring" is white on #e85f5f: 3.37:1, below AA. The theme's own darker red,
+   which it already uses for the booking Cancel button, gives 5.59:1. The selector repeats
+   the theme's chain (two ids) so it wins. */
+#membership-view #sb_membership_list_container > div .membership-item .btn-bar .sb_cancel_recurring {
+  background: #A64C4C;
+  color: #FFFFFF;
+  font-weight: 600;
+}
+
+/* The "Purchased" label: the theme hangs it 30px down the card's left edge, which with the
+   full-bleed cards of section 5 lands it on the button (desktop) or the title (phone). Pin
+   it to the top-right corner, clear of both. The selectors repeat the theme's own chains
+   because the theme's rules carry ids. It shows on Purchased plans, and on the plan cards on
+   Home and Memberships once the signed-in client holds that plan (which then have no button:
+   SimplyBook drops Buy, and section 5 hides the Renewal link that replaces it). */
+#sb_membership_module .membership-item .excerpt-info,
+#membership-view #sb_membership_list_container > div .membership-item .excerpt-info {
+  position: relative;
+}
+
+#sb_membership_module .membership-item .purchased,
+#membership-view #sb_membership_list_container > div .membership-item .purchased {
+  top: 16px;
+  right: 16px;
+  left: auto;
+  margin-top: 0;
+  padding: 6px 12px;
+  border-radius: 0;
+  font-family: var(--hangout-display);
+  font-size: 14px;
+  letter-spacing: 0.08em;
+}
+
+/* Buttons under a paid invoice sit edge to edge. */
+.invoice-buttons-container .btn-invoice {
+  margin: 0 8px 8px 0;
+}
+
+/* SimplyBook's shared dialog (#sb_dialog): the terms and the cancellation policy open in it
+   from the sign-up form (license_view). Its title is a heading, so Oswald, like the page
+   headings; its "I agree" is the theme's green (#33bb60 under white text, 2.3:1) and in mixed
+   case, so it becomes a pink button in capitals like every other; the policy's paragraphs,
+   which the theme runs together (margin: 0), get room between them. */
+.modal-dialog .modal-content .modal-header .modal-title {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+}
+
+.modal-dialog .modal-content .modal-footer .btn.btn-primary {
+  background: var(--hangout-pink);
+  color: #FFFFFF;
+  font-family: var(--hangout-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.modal-dialog .modal-content .modal-footer .btn.btn-primary:hover,
+.modal-dialog .modal-content .modal-footer .btn.btn-primary:focus-visible {
+  background: #A52758;                /* SimplyBook's own hover shade of the button colour */
+  opacity: 1;                         /* the theme fades footer buttons to .7 as well */
+}
+
+.modal-dialog.license-modal .modal-content .modal-body .license--content p {
+  margin: 0 0 12px;
+}
+
+/* "Remind password" (client_login_remind_password, in #sb_dialog): its title is a heading and
+   its button a button, so Oswald, and the button in capitals; the theme shouts the "check your
+   email" reply in 20px bold capitals, which here reads as a normal sentence. */
+#remind-password .cap {
+  font-family: var(--hangout-display);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--hangout-ink);
+}
+
+#remind-password .bar #sb_remind_btn {
+  font-family: var(--hangout-display);
+  font-size: 15px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+#remind-password .notifications {
+  font-size: 16px;
+  font-weight: 600;
+  text-transform: none;
+}
+
+/* The basket panel (cart_module_view): its title is a heading. */
+.full-info--cart_header .title {
+  font-family: var(--hangout-display);
+  font-size: 22px;
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  color: var(--hangout-ink);
+}
